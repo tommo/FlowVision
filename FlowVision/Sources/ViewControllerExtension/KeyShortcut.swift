@@ -308,6 +308,8 @@ extension ViewController {
             if characters == "[" && isOnlyCommandPressed {
                 if publicVar.isInLargeView{
                     previousLargeImage()
+                } else {
+                    switchDirByDirection(direction: .back, stackDeep: 0)
                 }
                 return nil
             }
@@ -317,6 +319,8 @@ extension ViewController {
             if characters == "]" && isOnlyCommandPressed {
                 if publicVar.isInLargeView{
                     nextLargeImage()
+                } else {
+                    switchDirByDirection(direction: .forward, stackDeep: 0)
                 }
                 return nil
             }

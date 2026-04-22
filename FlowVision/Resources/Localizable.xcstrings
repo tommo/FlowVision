@@ -10167,108 +10167,108 @@
       }
     },
     "Exif-CameraMaker" : {
-      "comment" : "制造商",
+      "comment" : "相机制造商",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "صنع"
+            "value" : "الشركة المصنعة للكاميرا"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hersteller"
+            "value" : "Kamerahersteller"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Make"
+            "value" : "Camera Maker"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fabricante"
+            "value" : "Fabricante de la cámara"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fabriquer"
+            "value" : "Fabricant de l'appareil photo"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Marca"
+            "value" : "Produttore della fotocamera"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "メーカー"
+            "value" : "カメラメーカー"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "제조사"
+            "value" : "카메라 제조사"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Maken"
+            "value" : "Camerafabrikant"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Producent"
+            "value" : "Producent aparatu"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fabricante"
+            "value" : "Fabricante da Câmera"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fabricante"
+            "value" : "Fabricante da Câmara"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Производитель"
+            "value" : "Производитель камеры"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tillverkare"
+            "value" : "Kameratillverkare"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Üretici"
+            "value" : "Kamera Üreticisi"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "制造商"
+            "value" : "相机制造商"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "製造商"
+            "value" : "相機製造商"
           }
         }
       }
@@ -11878,6 +11878,113 @@
         }
       }
     },
+    "Exif-FocalLenIn35mmFilm" : {
+      "comment" : "焦距 (35mm)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "البعد البؤري (35mm)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brennweite (35mm)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focal Length (35mm)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Longitud focal (35mm)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Longueur focale (35 mm)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lunghezza focale (35mm)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "焦点距離 (35mm)"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "초점 거리 (35mm)"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brandpuntsafstand (35mm)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ogniskowa (35mm)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distância Focal (35mm)"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distância Focal (35mm)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фокусное расстояние (35 мм)"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brännvidd (35mm)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odak Uzaklığı (35mm)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "焦距 (35mm)"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "焦距 (35mm)"
+          }
+        }
+      }
+    },
     "Exif-GPSAltitude" : {
       "comment" : "GPS海拔",
       "localizations" : {
@@ -12205,25 +12312,25 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تقييمات سرعة ISO"
+            "value" : "حساسية ISO"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ISO-Empfindlichkeitsstufen"
+            "value" : "ISO-Empfindlichkeit"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ISO Speed Ratings"
+            "value" : "ISO Sensitivity"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Valores ISO"
+            "value" : "Sensibilidad ISO"
           }
         },
         "fr" : {
@@ -12235,7 +12342,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Valori ISO"
+            "value" : "Sensibilità ISO"
           }
         },
         "ja" : {
@@ -12253,7 +12360,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ISO-snelheidsinstellingen"
+            "value" : "ISO-gevoeligheid"
           }
         },
         "pl" : {
@@ -12265,31 +12372,31 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Classificações de Velocidade ISO"
+            "value" : "Sensibilidade ISO"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Classificações de Velocidade ISO"
+            "value" : "Sensibilidade ISO"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Рейтинги ISO скорости"
+            "value" : "Чувствительность ISO"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ISO-hastigheter"
+            "value" : "ISO-känslighet"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ISO Hız Dereceleri"
+            "value" : "ISO Hassasiyeti"
           }
         },
         "zh-Hans" : {
