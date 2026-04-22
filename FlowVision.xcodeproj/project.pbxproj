@@ -41,7 +41,6 @@
 		F74D555C2F0E501200C9AB85 /* EventHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74D555B2F0E500C00C9AB85 /* EventHandler.swift */; };
 		F74D555E2F0E52F800C9AB85 /* ArrowKeyLocate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74D555D2F0E52EA00C9AB85 /* ArrowKeyLocate.swift */; };
 		F7663C162F222AAC0028DF35 /* ImageEditingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7663C152F222AAC0028DF35 /* ImageEditingView.swift */; };
-		F7AA00012F9E000000AA0001 /* VideoPlayerControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AA00002F9E000000AA0001 /* VideoPlayerControlsView.swift */; };
 		F76E2EFE2C3B765C0031B0B4 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76E2EFD2C3B765C0031B0B4 /* Log.swift */; };
 		F76F6A632F4FE58800D798DC /* TempVariable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76F6A622F4FE58000D798DC /* TempVariable.swift */; };
 		F76F6A652F5B15B700D798DC /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76F6A642F5B15B200D798DC /* ProgressBar.swift */; };
@@ -72,6 +71,7 @@
 		F7A075562BA1D716009C47A6 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7A075552BA1D716009C47A6 /* ViewController.swift */; };
 		F7A075582BA1D717009C47A6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F7A075572BA1D717009C47A6 /* Assets.xcassets */; };
 		F7A0755B2BA1D717009C47A6 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F7A075592BA1D717009C47A6 /* Main.storyboard */; };
+		F7AA00012F9E000000AA0001 /* VideoPlayerControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AA00002F9E000000AA0001 /* VideoPlayerControlsView.swift */; };
 		F7AAA8BD2D9BD1F2007CE330 /* VideoProcess.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AAA8BC2D9BD1ED007CE330 /* VideoProcess.swift */; };
 		F7AC30052D37E26B00F48AEF /* CustomPathControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AC30042D37E25800F48AEF /* CustomPathControl.swift */; };
 		F7C2DEB82C4E6AE9003DF765 /* Settings in Frameworks */ = {isa = PBXBuildFile; productRef = F7C2DEB72C4E6AE9003DF765 /* Settings */; };
@@ -162,7 +162,6 @@
 		F754F3CD2C10393700A25D12 /* libavformat.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libavformat.xcframework; path = "../ffmpeg-kit-build/bundle-apple-xcframework-macos/libavformat.xcframework"; sourceTree = "<group>"; };
 		F754F3CE2C10393700A25D12 /* libswresample.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libswresample.xcframework; path = "../ffmpeg-kit-build/bundle-apple-xcframework-macos/libswresample.xcframework"; sourceTree = "<group>"; };
 		F7663C152F222AAC0028DF35 /* ImageEditingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageEditingView.swift; sourceTree = "<group>"; };
-		F7AA00002F9E000000AA0001 /* VideoPlayerControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerControlsView.swift; sourceTree = "<group>"; };
 		F76E2EFD2C3B765C0031B0B4 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
 		F76F6A622F4FE58000D798DC /* TempVariable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TempVariable.swift; sourceTree = "<group>"; };
 		F76F6A642F5B15B200D798DC /* ProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressBar.swift; sourceTree = "<group>"; };
@@ -189,6 +188,7 @@
 		F7A075572BA1D717009C47A6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F7A0755A2BA1D717009C47A6 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		F7A0755C2BA1D717009C47A6 /* FlowVision.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FlowVision.entitlements; sourceTree = "<group>"; };
+		F7AA00002F9E000000AA0001 /* VideoPlayerControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerControlsView.swift; sourceTree = "<group>"; };
 		F7AAA8BC2D9BD1ED007CE330 /* VideoProcess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoProcess.swift; sourceTree = "<group>"; };
 		F7AC30042D37E25800F48AEF /* CustomPathControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPathControl.swift; sourceTree = "<group>"; };
 		F7C2DEBA2C4E6BEC003DF765 /* GeneralSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsViewController.swift; sourceTree = "<group>"; };
@@ -417,6 +417,21 @@
 				en,
 				Base,
 				"zh-Hans",
+				"zh-Hant",
+				ar,
+				nl,
+				fr,
+				de,
+				ja,
+				it,
+				ru,
+				ko,
+				es,
+				sv,
+				pl,
+				tr,
+				"pt-BR",
+				"pt-PT",
 			);
 			mainGroup = F7A075472BA1D716009C47A6;
 			packageReferences = (
