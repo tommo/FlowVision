@@ -586,7 +586,7 @@ class LargeImageView: NSView {
             if queuePlayer.timeControlStatus == .playing {
                 queuePlayer.pause()
             } else {
-                queuePlayer.play()
+                queuePlayer.rate = globalVar.videoPlaybackRate
             }
             videoControlsView.updatePlayPauseIcon()
         }
@@ -603,7 +603,7 @@ class LargeImageView: NSView {
     func resumeVideo() {
         if let queuePlayer = queuePlayer {
             if queuePlayer.timeControlStatus == .paused {
-                queuePlayer.play()
+                queuePlayer.rate = globalVar.videoPlaybackRate
             }
         }
     }
@@ -837,7 +837,7 @@ class LargeImageView: NSView {
                         playerLooper = AVPlayerLooper(player: queuePlayer, templateItem: playerItem, timeRange: finalTimeRange)
                     }
                     
-                    queuePlayer.play()
+                    queuePlayer.rate = globalVar.videoPlaybackRate
                     currentPlayingURL = url
                     
                     startPeriodicTimeObserver()
@@ -1136,6 +1136,37 @@ class LargeImageView: NSView {
         guard let player = queuePlayer else { return }
         globalVar.videoVolume = player.volume
         UserDefaults.standard.set(globalVar.videoVolume, forKey: "videoVolume")
+    }
+    
+    // MARK: - Playback Rate
+    
+    @objc func setPlaybackRate(_ sender: NSMenuItem) {
+        let rate = Float(sender.tag) / 100.0
+        globalVar.videoPlaybackRate = rate
+        UserDefaults.standard.set(rate, forKey: "videoPlaybackRate")
+        if let player = queuePlayer, player.rate > 0 {
+            player.rate = rate
+        }
+    }
+    
+    func buildPlaybackRateSubmenu() -> NSMenu {
+        let submenu = NSMenu()
+        let rates: [(String, Int)] = [
+            ("2x", 200),
+            ("1.5x", 150),
+            ("1.25x", 125),
+            ("1x", 100),
+            ("0.5x", 50),
+        ]
+        for (title, tag) in rates {
+            let item = submenu.addItem(withTitle: title, action: #selector(setPlaybackRate(_:)), keyEquivalent: "")
+            item.tag = tag
+            item.target = self
+            if Int(globalVar.videoPlaybackRate * 100) == tag {
+                item.state = .on
+            }
+        }
+        return submenu
     }
     
     // MARK: - Video Controls
@@ -1826,6 +1857,9 @@ class LargeImageView: NSView {
                 let actionItemSequentialPlay = menu.addItem(withTitle: NSLocalizedString("Sequential Playback", comment: "（视频）顺序播放"), action: #selector(actSequentialPlay), keyEquivalent: "l")
                 actionItemSequentialPlay.keyEquivalentModifierMask = []
                 actionItemSequentialPlay.state = globalVar.videoPlaySequentialPlay ? .on : .off
+
+                let playbackRateItem = menu.addItem(withTitle: NSLocalizedString("Playback Speed", comment: "播放速度"), action: nil, keyEquivalent: "")
+                playbackRateItem.submenu = buildPlaybackRateSubmenu()
             }
 
             menu.addItem(NSMenuItem.separator())

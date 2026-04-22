@@ -1525,6 +1525,9 @@ extension WindowController: NSToolbarDelegate {
             actionItemSequentialPlay.keyEquivalentModifierMask = []
             actionItemSequentialPlay.state = globalVar.videoPlaySequentialPlay ? .on : .off
 
+            let playbackRateItem = menu.addItem(withTitle: NSLocalizedString("Playback Speed", comment: "播放速度"), action: nil, keyEquivalent: "")
+            playbackRateItem.submenu = viewController.largeImageView.buildPlaybackRateSubmenu()
+
         }
 
         if !viewController.publicVar.isInLargeView {

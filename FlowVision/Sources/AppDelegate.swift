@@ -187,6 +187,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
         if let videoVolume = UserDefaults.standard.value(forKey: "videoVolume") as? Float {
             globalVar.videoVolume = videoVolume
         }
+        if let videoPlaybackRate = UserDefaults.standard.value(forKey: "videoPlaybackRate") as? Float {
+            globalVar.videoPlaybackRate = videoPlaybackRate
+        }
         if let useInternalPlayer = UserDefaults.standard.value(forKey: "useInternalPlayer") as? Bool {
             globalVar.useInternalPlayer = useInternalPlayer
         }
