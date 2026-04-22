@@ -94,6 +94,13 @@ extension ViewController {
         }
     }
 
+    func handleClearFinderTagFilter() {
+        publicVar.isFinderTagFilterReversed = false
+        publicVar.isFinderTagFilterModeAnd = false
+        publicVar.finderTagFilters.removeAll()
+        toggleFinderTagFilter(nil)
+    }
+
     func toggleFinderTagFilter(_ tagIndex: Int) {
         if tagIndex < 0 || tagIndex >= FinderTag.all.count {
             return
@@ -126,6 +133,12 @@ extension ViewController {
     func toggleFinderTagFilterReversed() {
         publicVar.isFinderTagFilterReversed.toggle()
         refreshCollectionView(needLoadThumbPriority: true)
+    }
+
+    func handleClearRatingFilter() {
+        publicVar.isRatingFilterReversed = false
+        publicVar.ratingFilters.removeAll()
+        toggleRatingFilter(nil)
     }
 
     func toggleRatingFilter(_ rating: Int?) {

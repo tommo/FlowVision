@@ -338,10 +338,7 @@ class CustomCollectionView: NSCollectionView {
     }
 
     @objc func actClearFinderTagFilter() {
-        getViewController(self)?.publicVar.isFinderTagFilterReversed = false
-        getViewController(self)?.publicVar.isFinderTagFilterModeAnd = false
-        getViewController(self)?.publicVar.finderTagFilters.removeAll()
-        getViewController(self)?.toggleFinderTagFilter(nil)
+        getViewController(self)?.handleClearFinderTagFilter()
     }
 
     @objc func actReverseFinderTagFilter() {
@@ -368,9 +365,7 @@ class CustomCollectionView: NSCollectionView {
     }
 
     @objc func actClearRatingFilter() {
-        getViewController(self)?.publicVar.isRatingFilterReversed = false
-        getViewController(self)?.publicVar.ratingFilters.removeAll()
-        getViewController(self)?.toggleRatingFilter(nil)
+        getViewController(self)?.handleClearRatingFilter()
     }
 
     @objc func actReverseRatingFilter() {

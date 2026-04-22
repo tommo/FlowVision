@@ -852,7 +852,7 @@ extension WindowController: NSToolbarDelegate {
             toolbarItem.visibilityPriority = .low
 
         case .isTagFilterOn:
-            let button = NSButton(title: "", image: NSImage(systemSymbolName: "tag.circle.fill", accessibilityDescription: "")!, target: self, action: #selector(toggleTagFilter(_:)))
+            let button = NSButton(title: "", image: NSImage(systemSymbolName: "tag.circle.fill", accessibilityDescription: "")!, target: self, action: #selector(toggleClearTagFilter(_:)))
             setButtonStyle(button)
             // button.showsBorderOnlyWhileMouseInside = false
             button.toolTip = NSLocalizedString("Cancel Filter", comment: "取消过滤")
@@ -862,7 +862,7 @@ extension WindowController: NSToolbarDelegate {
             toolbarItem.visibilityPriority = .low
             
         case .isRatingFilterOn:
-            let button = NSButton(title: "", image: NSImage(systemSymbolName: "star.circle.fill", accessibilityDescription: "")!, target: self, action: #selector(toggleRatingFilter(_:)))
+            let button = NSButton(title: "", image: NSImage(systemSymbolName: "star.circle.fill", accessibilityDescription: "")!, target: self, action: #selector(toggleClearRatingFilter(_:)))
             setButtonStyle(button)
             button.toolTip = NSLocalizedString("Cancel Filter", comment: "取消过滤")
             toolbarItem.view = button
@@ -1906,14 +1906,14 @@ extension WindowController: NSToolbarDelegate {
         viewController.applyFilter(isReset: true)
     }
 
-    @objc func toggleTagFilter(_ sender: NSMenuItem){
+    @objc func toggleClearTagFilter(_ sender: NSMenuItem){
         guard let viewController = contentViewController as? ViewController else {return}
-        viewController.toggleFinderTagFilter(nil)
+        viewController.handleClearFinderTagFilter()
     }
 
-    @objc func toggleRatingFilter(_ sender: NSMenuItem){
+    @objc func toggleClearRatingFilter(_ sender: NSMenuItem){
         guard let viewController = contentViewController as? ViewController else {return}
-        viewController.toggleRatingFilter(nil)
+        viewController.handleClearRatingFilter()
     }
     
     @objc func toggleRecursiveMode(_ sender: NSMenuItem){
