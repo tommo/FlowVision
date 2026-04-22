@@ -310,7 +310,8 @@ extension ViewController {
         // Exif排序时间警告
         // Exif sort time warning
         if publicVar.profile.sortType == .exifDateA || publicVar.profile.sortType == .exifDateZ
-            || publicVar.profile.sortType == .exifPixelA || publicVar.profile.sortType == .exifPixelZ {
+            || publicVar.profile.sortType == .exifPixelA || publicVar.profile.sortType == .exifPixelZ
+            || publicVar.profile.sortType == .ratingA || publicVar.profile.sortType == .ratingZ {
             
             if isExifSortTimeExceedCancel(folderURL: folderURL, imageCount: imageCount, videoCount: videoCount) {
                 contents.removeAll()

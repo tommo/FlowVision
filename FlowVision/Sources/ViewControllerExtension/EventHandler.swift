@@ -59,7 +59,8 @@ extension ViewController {
         // Exif排序时间警告
         // Exif sort time warning
         if sortType == .exifDateA || sortType == .exifDateZ
-            || sortType == .exifPixelA || sortType == .exifPixelZ {
+            || sortType == .exifPixelA || sortType == .exifPixelZ
+            || sortType == .ratingA || sortType == .ratingZ {
             
             var imageCount = 0
             var videoCount = 0

@@ -788,13 +788,15 @@ extension WindowController: NSToolbarDelegate {
                     title = NSLocalizedString("sort-label-exifDate", comment: "Exif日期")
                 case .exifPixelA,.exifPixelZ:
                     title = NSLocalizedString("sort-label-exifPixel", comment: "Exif像素")
+                case .ratingA,.ratingZ:
+                    title = NSLocalizedString("sort-label-rating", comment: "XMP评级")
                 }
                 switch viewController.publicVar.profile.sortType {
-                case .pathA,.extA,.sizeA,.createDateA,.modDateA,.addDateA,.exifDateA,.exifPixelA:
+                case .pathA,.extA,.sizeA,.createDateA,.modDateA,.addDateA,.exifDateA,.exifPixelA,.ratingA:
                     // image = NSImage(systemSymbolName: "arrow.up", accessibilityDescription: "")!
                     // image = NSImage(systemSymbolName: "arrowtriangle.up", accessibilityDescription: "")!
                     image = NSImage(systemSymbolName: "chevron.up.circle", accessibilityDescription: "")!
-                case .pathZ,.extZ,.sizeZ,.createDateZ,.modDateZ,.addDateZ,.exifDateZ,.exifPixelZ:
+                case .pathZ,.extZ,.sizeZ,.createDateZ,.modDateZ,.addDateZ,.exifDateZ,.exifPixelZ,.ratingZ:
                     image = NSImage(systemSymbolName: "chevron.down.circle", accessibilityDescription: "")!
                 case .random:
                     // image = NSImage(systemSymbolName: "arrow.up.arrow.down.circle", accessibilityDescription: "")!
@@ -1062,7 +1064,9 @@ extension WindowController: NSToolbarDelegate {
             .exifDateA: NSImage(systemSymbolName: "clock", accessibilityDescription: ""),
             .exifDateZ: NSImage(systemSymbolName: "clock", accessibilityDescription: ""),
             .exifPixelA: NSImage(systemSymbolName: "camera.aperture", accessibilityDescription: ""),
-            .exifPixelZ: NSImage(systemSymbolName: "camera.aperture", accessibilityDescription: "")
+            .exifPixelZ: NSImage(systemSymbolName: "camera.aperture", accessibilityDescription: ""),
+            .ratingA: NSImage(systemSymbolName: "star", accessibilityDescription: ""),
+            .ratingZ: NSImage(systemSymbolName: "star", accessibilityDescription: "")
         ]
         let sortTypes: [(SortType, String)] = [
             (.pathA, NSLocalizedString("sort-pathA", comment: "文件名")),
@@ -1084,7 +1088,9 @@ extension WindowController: NSToolbarDelegate {
             (.exifDateA, NSLocalizedString("sort-exifDateA", comment: "Exif日期")),
             (.exifDateZ, NSLocalizedString("sort-exifDateZ", comment: "Exif日期(倒序)")),
             (.exifPixelA, NSLocalizedString("sort-exifPixelA", comment: "Exif像素数")),
-            (.exifPixelZ, NSLocalizedString("sort-exifPixelZ", comment: "Exif像素数(倒序)"))
+            (.exifPixelZ, NSLocalizedString("sort-exifPixelZ", comment: "Exif像素数(倒序)")),
+            (.ratingA, NSLocalizedString("sort-ratingA", comment: "XMP评级")),
+            (.ratingZ, NSLocalizedString("sort-ratingZ", comment: "XMP评级(倒序)"))
         ]
         
         let menu = NSMenu()
