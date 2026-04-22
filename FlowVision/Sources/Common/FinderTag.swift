@@ -83,8 +83,7 @@ struct FinderTag {
             let path = NSBezierPath(ovalIn: r)
             color.setFill()
             path.fill()
-            let strokeColor: NSColor = color.usingColorSpace(.genericGray)?.whiteComponent ?? 0 > 0.9 ? .black : .white
-            strokeColor.setStroke()
+            (color.blended(withFraction: 0.3, of: .black) ?? color).setStroke()
             path.lineWidth = 0.5
             path.stroke()
             return true
@@ -148,29 +147,47 @@ class FinderTagDotsView: NSView {
         return index
     }
 
+    private static let hoverEnlarge: CGFloat = 4
+
     override func draw(_ dirtyRect: NSRect) {
         for (i, tag) in tags.enumerated() {
             let rect = dotRect(at: i)
-            let insetRect = rect.insetBy(dx: 0.5, dy: 0.5)
+            let isHovered = (i == hoveredIndex)
+
+            let drawRect = isHovered
+                ? rect.insetBy(dx: -Self.hoverEnlarge / 2, dy: -Self.hoverEnlarge / 2)
+                : rect
+            let insetRect = drawRect.insetBy(dx: 0.5, dy: 0.5)
             let path = NSBezierPath(ovalIn: insetRect)
 
             tag.color.setFill()
             path.fill()
 
+            let borderColor = tag.color==NSColor.white ? hexToNSColor(hex: "#AAAAAA", alpha: 1.0) : (tag.color.blended(withFraction: 0.1, of: .black) ?? tag.color)
+            borderColor.setStroke()
+            path.lineWidth = 1
+            path.stroke()
+
             let brightness = tag.color.usingColorSpace(.genericRGB)?.brightnessComponent ?? 0
-            if brightness > 0.85 {
-                NSColor.separatorColor.setStroke()
-                path.lineWidth = 0.75
-                path.stroke()
-            }
 
-            if i == hoveredIndex {
-                NSColor.white.withAlphaComponent(0.3).setFill()
-                path.fill()
-            }
-
-            if activeTags.contains(tag.name) {
-                let checkColor: NSColor = brightness > 0.85 ? .labelColor : .white
+            if isHovered {
+                let isActive = activeTags.contains(tag.name)
+                let symbolColor: NSColor = hexToNSColor(hex: "#3A3A3A", alpha: 1.0)
+                symbolColor.setStroke()
+                let cx = drawRect.midX, cy = drawRect.midY
+                let arm = drawRect.width * 0.2
+                let symbol = NSBezierPath()
+                symbol.move(to: NSPoint(x: cx - arm, y: cy))
+                symbol.line(to: NSPoint(x: cx + arm, y: cy))
+                if !isActive {
+                    symbol.move(to: NSPoint(x: cx, y: cy - arm))
+                    symbol.line(to: NSPoint(x: cx, y: cy + arm))
+                }
+                symbol.lineWidth = 2.0
+                symbol.lineCapStyle = .round
+                symbol.stroke()
+            } else if activeTags.contains(tag.name) {
+                let checkColor: NSColor = hexToNSColor(hex: "#3A3A3A", alpha: 1.0)
                 checkColor.setStroke()
                 let cx = rect.midX, cy = rect.midY
                 let s = rect.width / 16.0
