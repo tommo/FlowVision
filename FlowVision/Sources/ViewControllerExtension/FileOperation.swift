@@ -463,8 +463,10 @@ extension ViewController {
         }
         
         var shouldReplaceAll = false
+        var shouldMergeAll = false
         var shouldSkipAll = false
         var shouldAutoRenameAll = false
+        let sharedMergeState = MergeConflictState()
         
         let StoreIsKeyEventEnabled = publicVar.isKeyEventEnabled
         publicVar.isKeyEventEnabled = false
@@ -485,6 +487,14 @@ extension ViewController {
             }
             
             if FileManager.default.fileExists(atPath: destURL.path) {
+                // 检测源和目标是否都是文件夹
+                // Check if both source and destination are folders
+                var srcIsDir: ObjCBool = false
+                FileManager.default.fileExists(atPath: fileURL.path, isDirectory: &srcIsDir)
+                var dstIsDir: ObjCBool = false
+                FileManager.default.fileExists(atPath: destURL.path, isDirectory: &dstIsDir)
+                let bothAreFolders = srcIsDir.boolValue && dstIsDir.boolValue
+                
                 if shouldReplaceAll {
                     do {
                         try FileManager.default.removeItem(at: destURL)
@@ -493,6 +503,15 @@ extension ViewController {
                         publicVar.fileChangedCount += 1
                     } catch {
                         log("Failed to paste \(fileURL): \(error)", level: .error)
+                    }
+                } else if shouldMergeAll && bothAreFolders {
+                    if mergeFolderByCopy(from: fileURL, to: destURL, state: sharedMergeState) {
+                        successfulDestURLs.append(destURL.absoluteString)
+                        publicVar.fileChangedCount += 1
+                    }
+                    if sharedMergeState.cancelled {
+                        publicVar.isKeyEventEnabled = StoreIsKeyEventEnabled
+                        return
                     }
                 } else if shouldSkipAll {
                     continue
@@ -506,7 +525,7 @@ extension ViewController {
                         log("Failed to paste \(fileURL): \(error)", level: .error)
                     }
                 } else {
-                    let userChoice = showReplaceDialog(for: destURL, isSingle: items.count == 1, isMove: false)
+                    let userChoice = showReplaceDialog(for: destURL, sourceURL: fileURL, isSingle: items.count == 1, isMove: false)
                     switch userChoice {
                     case .replace:
                         do {
@@ -526,6 +545,25 @@ extension ViewController {
                             publicVar.fileChangedCount += 1
                         } catch {
                             log("Failed to paste \(fileURL): \(error)", level: .error)
+                        }
+                    case .merge:
+                        if mergeFolderByCopy(from: fileURL, to: destURL, state: sharedMergeState) {
+                            successfulDestURLs.append(destURL.absoluteString)
+                            publicVar.fileChangedCount += 1
+                        }
+                        if sharedMergeState.cancelled {
+                            publicVar.isKeyEventEnabled = StoreIsKeyEventEnabled
+                            return
+                        }
+                    case .mergeAll:
+                        shouldMergeAll = true
+                        if mergeFolderByCopy(from: fileURL, to: destURL, state: sharedMergeState) {
+                            successfulDestURLs.append(destURL.absoluteString)
+                            publicVar.fileChangedCount += 1
+                        }
+                        if sharedMergeState.cancelled {
+                            publicVar.isKeyEventEnabled = StoreIsKeyEventEnabled
+                            return
                         }
                     case .autoRename:
                         destURL = getUniqueDestinationURL(for: destURL, isInPlace: false)
@@ -720,8 +758,10 @@ extension ViewController {
         }
         
         var shouldReplaceAll = false
+        var shouldMergeAll = false
         var shouldSkipAll = false
         var shouldAutoRenameAll = false
+        let sharedMergeState = MergeConflictState()
         
         let StoreIsKeyEventEnabled = publicVar.isKeyEventEnabled
         publicVar.isKeyEventEnabled = false
@@ -742,6 +782,14 @@ extension ViewController {
             }
 
             if FileManager.default.fileExists(atPath: destURL.path) {
+                // 检测源和目标是否都是文件夹
+                // Check if both source and destination are folders
+                var srcIsDir: ObjCBool = false
+                FileManager.default.fileExists(atPath: fileURL.path, isDirectory: &srcIsDir)
+                var dstIsDir: ObjCBool = false
+                FileManager.default.fileExists(atPath: destURL.path, isDirectory: &dstIsDir)
+                let bothAreFolders = srcIsDir.boolValue && dstIsDir.boolValue
+                
                 if shouldReplaceAll {
                     do {
                         try FileManager.default.removeItem(at: destURL)
@@ -750,6 +798,15 @@ extension ViewController {
                         publicVar.fileChangedCount += 1
                     } catch {
                         log("Failed to move \(fileURL): \(error)", level: .error)
+                    }
+                } else if shouldMergeAll && bothAreFolders {
+                    if mergeFolderByMove(from: fileURL, to: destURL, state: sharedMergeState) {
+                        successfulDestURLs.append(destURL.absoluteString)
+                        publicVar.fileChangedCount += 1
+                    }
+                    if sharedMergeState.cancelled {
+                        publicVar.isKeyEventEnabled = StoreIsKeyEventEnabled
+                        return
                     }
                 } else if shouldSkipAll {
                     continue
@@ -763,7 +820,7 @@ extension ViewController {
                         log("Failed to move \(fileURL): \(error)", level: .error)
                     }
                 } else {
-                    let userChoice = showReplaceDialog(for: destURL, isSingle: items.count == 1, isMove: true)
+                    let userChoice = showReplaceDialog(for: destURL, sourceURL: fileURL, isSingle: items.count == 1, isMove: true)
                     switch userChoice {
                     case .replace:
                         do {
@@ -783,6 +840,25 @@ extension ViewController {
                             publicVar.fileChangedCount += 1
                         } catch {
                             log("Failed to move \(fileURL): \(error)", level: .error)
+                        }
+                    case .merge:
+                        if mergeFolderByMove(from: fileURL, to: destURL, state: sharedMergeState) {
+                            successfulDestURLs.append(destURL.absoluteString)
+                            publicVar.fileChangedCount += 1
+                        }
+                        if sharedMergeState.cancelled {
+                            publicVar.isKeyEventEnabled = StoreIsKeyEventEnabled
+                            return
+                        }
+                    case .mergeAll:
+                        shouldMergeAll = true
+                        if mergeFolderByMove(from: fileURL, to: destURL, state: sharedMergeState) {
+                            successfulDestURLs.append(destURL.absoluteString)
+                            publicVar.fileChangedCount += 1
+                        }
+                        if sharedMergeState.cancelled {
+                            publicVar.isKeyEventEnabled = StoreIsKeyEventEnabled
+                            return
                         }
                     case .autoRename:
                         destURL = getUniqueDestinationURL(for: destURL, isInPlace: false)
@@ -990,6 +1066,8 @@ extension ViewController {
     enum ReplaceDialogUserChoice {
         case replace
         case replaceAll
+        case merge
+        case mergeAll
         case skip
         case skipAll
         case autoRename
@@ -997,7 +1075,13 @@ extension ViewController {
         case cancel
     }
 
-    func showReplaceDialog(for url: URL, isSingle: Bool, isMove: Bool) -> ReplaceDialogUserChoice {
+    func showReplaceDialog(for url: URL, sourceURL: URL? = nil, isSingle: Bool, isMove: Bool) -> ReplaceDialogUserChoice {
+        var srcIsDir: ObjCBool = false
+        let sourceIsFolder = sourceURL != nil && FileManager.default.fileExists(atPath: sourceURL!.path, isDirectory: &srcIsDir) && srcIsDir.boolValue
+        var dstIsDir: ObjCBool = false
+        let destIsFolder = FileManager.default.fileExists(atPath: url.path, isDirectory: &dstIsDir) && dstIsDir.boolValue
+        let canMerge = sourceIsFolder && destIsFolder
+        
         let alert = NSAlert()
         alert.messageText = String(format: NSLocalizedString("has-exist-in-dest", comment: "目标文件夹中已存在名为xx的文件。"), url.lastPathComponent)
         if isMove {
@@ -1006,18 +1090,19 @@ extension ViewController {
             alert.informativeText = NSLocalizedString("do-you-want-replace(paste)", comment: "你要用正在粘贴的文件替换它吗？")
         }
         alert.alertStyle = .warning
-        // 设置系统提示图标
-        // Set system notification icon
         alert.icon = NSImage(named: NSImage.infoName)
+        
+        // Button order: Replace, [Merge if both folders], Auto Rename, [Skip if multiple], Cancel
         alert.addButton(withTitle: NSLocalizedString("Replace", comment: "替换"))
+        if canMerge {
+            alert.addButton(withTitle: NSLocalizedString("Merge", comment: "合并"))
+        }
         alert.addButton(withTitle: NSLocalizedString("Auto Rename", comment: "自动重命名"))
         if !isSingle {
             alert.addButton(withTitle: NSLocalizedString("Skip", comment: "跳过"))
         }
         alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "取消"))
         
-        // 添加复选框
-        // Add checkbox
         let applyToAllCheckbox = NSButton(checkboxWithTitle: NSLocalizedString("Apply to all", comment: "应用到全部"), target: nil, action: nil)
         if !isSingle {
             alert.accessoryView = applyToAllCheckbox
@@ -1026,18 +1111,314 @@ extension ViewController {
         let response = alert.runModal()
         let applyToAll = applyToAllCheckbox.state == .on
         
-        switch response {
-        case .alertFirstButtonReturn:
-            return applyToAll ? .replaceAll : .replace
-        case .alertSecondButtonReturn:
-            return applyToAll ? .autoRenameAll : .autoRename
-        case .alertThirdButtonReturn:
-            return applyToAll ? .skipAll : .skip
-        case NSApplication.ModalResponse(rawValue: 1003):
-            return .cancel
-        default:
-            return .cancel
+        if canMerge {
+            // Buttons: Replace(1000), Merge(1001), AutoRename(1002), Skip?(1003), Cancel(1003 or 1004)
+            switch response {
+            case .alertFirstButtonReturn:
+                return applyToAll ? .replaceAll : .replace
+            case .alertSecondButtonReturn:
+                return applyToAll ? .mergeAll : .merge
+            case .alertThirdButtonReturn:
+                return applyToAll ? .autoRenameAll : .autoRename
+            case NSApplication.ModalResponse(rawValue: 1003):
+                if !isSingle { return applyToAll ? .skipAll : .skip }
+                return .cancel
+            case NSApplication.ModalResponse(rawValue: 1004):
+                return .cancel
+            default:
+                return .cancel
+            }
+        } else {
+            switch response {
+            case .alertFirstButtonReturn:
+                return applyToAll ? .replaceAll : .replace
+            case .alertSecondButtonReturn:
+                return applyToAll ? .autoRenameAll : .autoRename
+            case .alertThirdButtonReturn:
+                return applyToAll ? .skipAll : .skip
+            case NSApplication.ModalResponse(rawValue: 1003):
+                return .cancel
+            default:
+                return .cancel
+            }
         }
+    }
+    
+    /// Tracks user choices across recursive merge operations so "apply to all" persists.
+    class MergeConflictState {
+        var shouldReplaceAll = false
+        var shouldSkipAll = false
+        var shouldAutoRenameAll = false
+        var cancelled = false
+    }
+    
+    @discardableResult
+    func mergeFolderByCopy(from sourceURL: URL, to destURL: URL, state: MergeConflictState? = nil) -> Bool {
+        let fm = FileManager.default
+        let state = state ?? MergeConflictState()
+        
+        var isDir: ObjCBool = false
+        guard fm.fileExists(atPath: sourceURL.path, isDirectory: &isDir), isDir.boolValue else {
+            return false
+        }
+        
+        if !fm.fileExists(atPath: destURL.path) {
+            do {
+                try fm.copyItem(at: sourceURL, to: destURL)
+                return true
+            } catch {
+                log("Merge copy failed (create dest): \(error)", level: .error)
+                return false
+            }
+        }
+        
+        guard let contents = try? fm.contentsOfDirectory(at: sourceURL, includingPropertiesForKeys: [.isDirectoryKey], options: []) else {
+            return false
+        }
+        
+        var allSuccess = true
+        for itemURL in contents {
+            if state.cancelled { return false }
+            
+            var destItemURL = destURL.appendingPathComponent(itemURL.lastPathComponent)
+            
+            var srcIsDir: ObjCBool = false
+            fm.fileExists(atPath: itemURL.path, isDirectory: &srcIsDir)
+            var dstIsDir: ObjCBool = false
+            let destExists = fm.fileExists(atPath: destItemURL.path, isDirectory: &dstIsDir)
+            
+            if srcIsDir.boolValue && destExists && dstIsDir.boolValue {
+                if !mergeFolderByCopy(from: itemURL, to: destItemURL, state: state) {
+                    allSuccess = false
+                }
+            } else if destExists {
+                if state.shouldReplaceAll {
+                    do {
+                        try fm.removeItem(at: destItemURL)
+                        try fm.copyItem(at: itemURL, to: destItemURL)
+                    } catch {
+                        log("Merge copy failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                        allSuccess = false
+                    }
+                } else if state.shouldSkipAll {
+                    continue
+                } else if state.shouldAutoRenameAll {
+                    destItemURL = getUniqueDestinationURL(for: destItemURL, isInPlace: false)
+                    do {
+                        try fm.copyItem(at: itemURL, to: destItemURL)
+                    } catch {
+                        log("Merge copy failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                        allSuccess = false
+                    }
+                } else {
+                    let choice = showReplaceDialog(for: destItemURL, sourceURL: itemURL, isSingle: false, isMove: false)
+                    switch choice {
+                    case .replace:
+                        do {
+                            try fm.removeItem(at: destItemURL)
+                            try fm.copyItem(at: itemURL, to: destItemURL)
+                        } catch {
+                            log("Merge copy failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                            allSuccess = false
+                        }
+                    case .replaceAll:
+                        state.shouldReplaceAll = true
+                        do {
+                            try fm.removeItem(at: destItemURL)
+                            try fm.copyItem(at: itemURL, to: destItemURL)
+                        } catch {
+                            log("Merge copy failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                            allSuccess = false
+                        }
+                    case .merge, .mergeAll:
+                        if srcIsDir.boolValue {
+                            if !mergeFolderByCopy(from: itemURL, to: destItemURL, state: state) {
+                                allSuccess = false
+                            }
+                        } else {
+                            do {
+                                try fm.removeItem(at: destItemURL)
+                                try fm.copyItem(at: itemURL, to: destItemURL)
+                            } catch {
+                                log("Merge copy failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                                allSuccess = false
+                            }
+                        }
+                    case .autoRename:
+                        destItemURL = getUniqueDestinationURL(for: destItemURL, isInPlace: false)
+                        do {
+                            try fm.copyItem(at: itemURL, to: destItemURL)
+                        } catch {
+                            log("Merge copy failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                            allSuccess = false
+                        }
+                    case .autoRenameAll:
+                        state.shouldAutoRenameAll = true
+                        destItemURL = getUniqueDestinationURL(for: destItemURL, isInPlace: false)
+                        do {
+                            try fm.copyItem(at: itemURL, to: destItemURL)
+                        } catch {
+                            log("Merge copy failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                            allSuccess = false
+                        }
+                    case .skip:
+                        continue
+                    case .skipAll:
+                        state.shouldSkipAll = true
+                        continue
+                    case .cancel:
+                        state.cancelled = true
+                        return false
+                    }
+                }
+            } else {
+                do {
+                    try fm.copyItem(at: itemURL, to: destItemURL)
+                } catch {
+                    log("Merge copy failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                    allSuccess = false
+                }
+            }
+        }
+        return allSuccess
+    }
+    
+    @discardableResult
+    func mergeFolderByMove(from sourceURL: URL, to destURL: URL, state: MergeConflictState? = nil) -> Bool {
+        let fm = FileManager.default
+        let state = state ?? MergeConflictState()
+        
+        var isDir: ObjCBool = false
+        guard fm.fileExists(atPath: sourceURL.path, isDirectory: &isDir), isDir.boolValue else {
+            return false
+        }
+        
+        if !fm.fileExists(atPath: destURL.path) {
+            do {
+                try fm.moveItem(at: sourceURL, to: destURL)
+                return true
+            } catch {
+                log("Merge move failed (create dest): \(error)", level: .error)
+                return false
+            }
+        }
+        
+        guard let contents = try? fm.contentsOfDirectory(at: sourceURL, includingPropertiesForKeys: [.isDirectoryKey], options: []) else {
+            return false
+        }
+        
+        var allSuccess = true
+        for itemURL in contents {
+            if state.cancelled { return false }
+            
+            var destItemURL = destURL.appendingPathComponent(itemURL.lastPathComponent)
+            
+            var srcIsDir: ObjCBool = false
+            fm.fileExists(atPath: itemURL.path, isDirectory: &srcIsDir)
+            var dstIsDir: ObjCBool = false
+            let destExists = fm.fileExists(atPath: destItemURL.path, isDirectory: &dstIsDir)
+            
+            if srcIsDir.boolValue && destExists && dstIsDir.boolValue {
+                if !mergeFolderByMove(from: itemURL, to: destItemURL, state: state) {
+                    allSuccess = false
+                }
+            } else if destExists {
+                if state.shouldReplaceAll {
+                    do {
+                        try fm.removeItem(at: destItemURL)
+                        try fm.moveItem(at: itemURL, to: destItemURL)
+                    } catch {
+                        log("Merge move failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                        allSuccess = false
+                    }
+                } else if state.shouldSkipAll {
+                    continue
+                } else if state.shouldAutoRenameAll {
+                    destItemURL = getUniqueDestinationURL(for: destItemURL, isInPlace: false)
+                    do {
+                        try fm.moveItem(at: itemURL, to: destItemURL)
+                    } catch {
+                        log("Merge move failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                        allSuccess = false
+                    }
+                } else {
+                    let choice = showReplaceDialog(for: destItemURL, sourceURL: itemURL, isSingle: false, isMove: true)
+                    switch choice {
+                    case .replace:
+                        do {
+                            try fm.removeItem(at: destItemURL)
+                            try fm.moveItem(at: itemURL, to: destItemURL)
+                        } catch {
+                            log("Merge move failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                            allSuccess = false
+                        }
+                    case .replaceAll:
+                        state.shouldReplaceAll = true
+                        do {
+                            try fm.removeItem(at: destItemURL)
+                            try fm.moveItem(at: itemURL, to: destItemURL)
+                        } catch {
+                            log("Merge move failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                            allSuccess = false
+                        }
+                    case .merge, .mergeAll:
+                        if srcIsDir.boolValue {
+                            if !mergeFolderByMove(from: itemURL, to: destItemURL, state: state) {
+                                allSuccess = false
+                            }
+                        } else {
+                            do {
+                                try fm.removeItem(at: destItemURL)
+                                try fm.moveItem(at: itemURL, to: destItemURL)
+                            } catch {
+                                log("Merge move failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                                allSuccess = false
+                            }
+                        }
+                    case .autoRename:
+                        destItemURL = getUniqueDestinationURL(for: destItemURL, isInPlace: false)
+                        do {
+                            try fm.moveItem(at: itemURL, to: destItemURL)
+                        } catch {
+                            log("Merge move failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                            allSuccess = false
+                        }
+                    case .autoRenameAll:
+                        state.shouldAutoRenameAll = true
+                        destItemURL = getUniqueDestinationURL(for: destItemURL, isInPlace: false)
+                        do {
+                            try fm.moveItem(at: itemURL, to: destItemURL)
+                        } catch {
+                            log("Merge move failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                            allSuccess = false
+                        }
+                    case .skip:
+                        continue
+                    case .skipAll:
+                        state.shouldSkipAll = true
+                        continue
+                    case .cancel:
+                        state.cancelled = true
+                        return false
+                    }
+                }
+            } else {
+                do {
+                    try fm.moveItem(at: itemURL, to: destItemURL)
+                } catch {
+                    log("Merge move failed (\(itemURL.lastPathComponent)): \(error)", level: .error)
+                    allSuccess = false
+                }
+            }
+        }
+        
+        // Remove source directory if it's now empty or all items were moved
+        let remaining = try? fm.contentsOfDirectory(at: sourceURL, includingPropertiesForKeys: nil, options: [])
+        if remaining?.isEmpty ?? true {
+            try? fm.removeItem(at: sourceURL)
+        }
+        
+        return allSuccess
     }
     
     func handleRename(urls: [URL]) -> Bool {
