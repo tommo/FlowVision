@@ -25936,97 +25936,97 @@
         }
       }
     },
-    "scanned-files" : {
-      "comment" : "当前已扫描 %d 个文件，其中图像 %d 个，视频 %d 个。是否继续？",
+    "scanned-files-progress" : {
+      "comment" : "当前已扫描 %d 个文件，其中图像 %d 个，视频 %d 个",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "حاليًا تم فحص %d ملفات، بما في ذلك %d صور و%d مقاطع فيديو. هل ترغب في المتابعة؟"
+            "value" : "تم فحص %d ملفات، بما في ذلك %d صور و%d مقاطع فيديو"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Derzeit werden %d Dateien gescannt, darunter %d Bilder und %d Videos. Möchten Sie fortfahren?"
+            "value" : "%d Dateien gescannt, darunter %d Bilder und %d Videos"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Currently scanned %d files, including %d images and %d videos. Do you want to continue?"
+            "value" : "Scanned %d files, including %d images and %d videos"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Actualmente se han escaneado %d archivos, incluidos %d imágenes y %d videos. ¿Desea continuar?"
+            "value" : "%d archivos escaneados, incluidos %d imágenes y %d videos"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Actuellement %d fichiers scannés, dont %d images et %d vidéos. Voulez-vous continuer?"
+            "value" : "%d fichiers scannés, dont %d images et %d vidéos"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Attualmente scansionati %d file, inclusi %d immagini e %d video. Vuoi continuare?"
+            "value" : "%d file scansionati, inclusi %d immagini e %d video"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "現在までに %d 件のファイルをスキャンしました。うち、画像 %d 件、動画 %d 件です。続行しますか？"
+            "value" : "%d 件のファイルをスキャン済み（画像 %d 件、動画 %d 件）"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "현재 %d개의 파일을 스캔했으며, 그 중 %d개의 이미지와 %d개의 비디오가 포함되어 있습니다. 계속하시겠습니까?"
+            "value" : "%d개의 파일 스캔 완료 (이미지 %d개, 비디오 %d개)"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Momenteel zijn %d bestanden gescand, inclusief %d afbeeldingen en %d video's. Wilt u doorgaan?"
+            "value" : "%d bestanden gescand, inclusief %d afbeeldingen en %d video's"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Atualmente escaneados %d arquivos, incluindo %d imagens e %d vídeos. Deseja continuar?"
+            "value" : "%d arquivos escaneados, incluindo %d imagens e %d vídeos"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Atualmente foram verificados %d ficheiros, incluindo %d imagens e %d vídeos. Deseja continuar?"
+            "value" : "%d ficheiros verificados, incluindo %d imagens e %d vídeos"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "На данный момент просканировано %d файлов, включая %d изображений и %d видео. Хотите продолжить?"
+            "value" : "Просканировано %d файлов, включая %d изображений и %d видео"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "För närvarande scannade %d filer, inklusive %d bilder och %d videor. Vill du fortsätta?"
+            "value" : "%d filer scannade, inklusive %d bilder och %d videor"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "当前已扫描 %d 个文件，其中图像 %d 个，视频 %d 个。是否继续？"
+            "value" : "当前已扫描 %d 个文件，其中图像 %d 个，视频 %d 个"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "當前已掃描 %d 個文件，其中圖像 %d 個，視頻 %d 個。是否繼續？"
+            "value" : "當前已掃描 %d 個文件，其中圖像 %d 個，視頻 %d 個"
           }
         }
       }
@@ -32487,6 +32487,101 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Finder標籤(降序)"
+          }
+        }
+      }
+    },
+    "Sorting results..." : {
+      "comment" : "正在对结果进行排序...",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ فرز النتائج..."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sortiere Ergebnisse..."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sorting results..."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordenando resultados..."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tri des résultats..."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordinamento dei risultati..."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結果を並べ替えています..."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "결과 정렬 중..."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resultaten sorteren..."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classificando resultados..."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A ordenar resultados..."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сортировка результатов..."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sorterar resultat..."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在对结果进行排序..."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在排序結果..."
           }
         }
       }

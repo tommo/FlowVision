@@ -8,59 +8,172 @@ import Cocoa
 import AVFoundation
 import DiskArbitration
 
+private class ScanCancelHandler: NSObject {
+    var onCancel: (() -> Void)?
+    @objc func cancel(_ sender: Any?) { onCancel?() }
+}
+
 extension ViewController {
     
-    func showScanAlert(fileCount: Int, imageCount: Int, videoCount: Int) -> Bool {
-        let alert = NSAlert()
-        alert.messageText = NSLocalizedString("Scan Prompt", comment: "扫描提示")
-        alert.informativeText = String(format: NSLocalizedString("scanned-files", comment: "当前已扫描 %d 个文件，其中图像 %d 个，视频 %d 个。是否继续？"), fileCount, imageCount, videoCount)
-        alert.addButton(withTitle: NSLocalizedString("Continue", comment: "继续"))
-        alert.addButton(withTitle: NSLocalizedString("Stop", comment: "停止"))
-        
-        let StoreIsKeyEventEnabled = publicVar.isKeyEventEnabled
-        publicVar.isKeyEventEnabled = false
-        let response = alert.runModal()
-        publicVar.isKeyEventEnabled = StoreIsKeyEventEnabled
-        
-        return response == .alertFirstButtonReturn
-    }
-    
-    func scanFiles(at folderURL: URL, contents: inout [URL],  properties: [URLResourceKey]) {
-        let options:FileManager.DirectoryEnumerationOptions = publicVar.isShowHiddenFile ? [] : [.skipsHiddenFiles]
+    func scanFiles(at folderURL: URL, contents: inout [URL], properties: [URLResourceKey]) {
+        let options: FileManager.DirectoryEnumerationOptions = publicVar.isShowHiddenFile ? [] : [.skipsHiddenFiles]
         let enumerator = FileManager.default.enumerator(at: folderURL, includingPropertiesForKeys: properties, options: options, errorHandler: { (url, error) -> Bool in
             print("Error enumerating \(url): \(error.localizedDescription)")
             return true
         })
-
+        
+        let isRecursiveContainFolder = publicVar.isRecursiveContainFolder
+        
+        let lock = NSLock()
+        var isCancelled = false
+        var scannedURLs = [URL]()
         var fileCount = 0
         var imageCount = 0
         var videoCount = 0
-        let scanInterval: TimeInterval = 4.0
-        var startDate = Date()
+        var scanDone = false
         
-        while let url = enumerator?.nextObject() as? URL {
-            let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
-            if !isDirectory || publicVar.isRecursiveContainFolder {
-                contents.append(url)
-                fileCount += 1
-                if globalVar.HandledImageAndRawExtensions.contains(url.pathExtension.lowercased()) {
-                    imageCount += 1
-                } else if globalVar.HandledVideoExtensions.contains(url.pathExtension.lowercased()) {
-                    videoCount += 1
+        // Progress panel (created lazily, only shown if scan takes > 2s)
+        let panelWidth: CGFloat = 360
+        let panelHeight: CGFloat = 110
+        let panel = NSPanel(
+            contentRect: NSRect(x: 0, y: 0, width: panelWidth, height: panelHeight),
+            styleMask: [.titled],
+            backing: .buffered,
+            defer: true
+        )
+        panel.title = NSLocalizedString("Scan Prompt", comment: "扫描提示")
+        panel.isFloatingPanel = true
+        panel.center()
+        panel.standardWindowButton(.closeButton)?.isHidden = true
+        panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
+        panel.standardWindowButton(.zoomButton)?.isHidden = true
+        
+        let contentView = NSView(frame: NSRect(x: 0, y: 0, width: panelWidth, height: panelHeight))
+        
+        let progressIndicator = NSProgressIndicator(frame: NSRect(x: 20, y: 72, width: panelWidth - 40, height: 20))
+        progressIndicator.style = .bar
+        progressIndicator.isIndeterminate = true
+        contentView.addSubview(progressIndicator)
+        
+        let statusLabel = NSTextField(labelWithString: "")
+        statusLabel.frame = NSRect(x: 20, y: 44, width: panelWidth - 40, height: 20)
+        statusLabel.font = NSFont.systemFont(ofSize: 12)
+        statusLabel.alignment = .left
+        statusLabel.lineBreakMode = .byTruncatingTail
+        contentView.addSubview(statusLabel)
+        
+        let cancelButton = NSButton(title: NSLocalizedString("Stop", comment: "停止"), target: nil, action: nil)
+        cancelButton.frame = NSRect(x: (panelWidth - 80) / 2, y: 10, width: 80, height: 24)
+        cancelButton.bezelStyle = .rounded
+        cancelButton.keyEquivalent = "\u{1b}"
+        contentView.addSubview(cancelButton)
+        
+        panel.contentView = contentView
+        
+        var modalStopped = false
+        var didEnterModal = false
+        
+        let cancelHandler = ScanCancelHandler()
+        cancelHandler.onCancel = {
+            lock.lock()
+            isCancelled = true
+            lock.unlock()
+            if !modalStopped {
+                modalStopped = true
+                statusLabel.stringValue = NSLocalizedString("Sorting results...", comment: "正在对结果进行排序...")
+                DispatchQueue.main.async {
+                    NSApp.stopModal()
+                }
+            }
+        }
+        cancelButton.target = cancelHandler
+        cancelButton.action = #selector(ScanCancelHandler.cancel(_:))
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            var lastUpdateTime = Date()
+            
+            while let url = enumerator?.nextObject() as? URL {
+                lock.lock()
+                let cancelled = isCancelled
+                lock.unlock()
+                if cancelled { break }
+                
+                let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+                if !isDirectory || isRecursiveContainFolder {
+                    lock.lock()
+                    scannedURLs.append(url)
+                    fileCount += 1
+                    if globalVar.HandledImageAndRawExtensions.contains(url.pathExtension.lowercased()) {
+                        imageCount += 1
+                    } else if globalVar.HandledVideoExtensions.contains(url.pathExtension.lowercased()) {
+                        videoCount += 1
+                    }
+                    let fc = fileCount
+                    let ic = imageCount
+                    let vc = videoCount
+                    lock.unlock()
+                    
+                    let now = Date()
+                    if now.timeIntervalSince(lastUpdateTime) >= 0.3 {
+                        lastUpdateTime = now
+                        DispatchQueue.main.async {
+                            statusLabel.stringValue = String(format: NSLocalizedString("scanned-files-progress", comment: "当前已扫描 %d 个文件，其中图像 %d 个，视频 %d 个"), fc, ic, vc)
+                        }
+                    }
                 }
             }
             
-            let elapsedTime = Date().timeIntervalSince(startDate)
-            if elapsedTime >= scanInterval {
-                let shouldContinue = showScanAlert(fileCount: fileCount, imageCount: imageCount, videoCount: videoCount)
-                if !shouldContinue {
-                    break
+            lock.lock()
+            scanDone = true
+            lock.unlock()
+            
+            DispatchQueue.main.async {
+                if didEnterModal && !modalStopped {
+                    modalStopped = true
+                    statusLabel.stringValue = NSLocalizedString("Sorting results...", comment: "正在对结果进行排序...")
+                    DispatchQueue.main.async {
+                        NSApp.stopModal()
+                    }
                 }
-                // Reset the timer
-                startDate = Date()
             }
         }
-
+        
+        // Wait up to X seconds for scan to finish before showing the panel
+        let showPanelDelay: TimeInterval = 2.0
+        let waitStart = Date()
+        while Date().timeIntervalSince(waitStart) < showPanelDelay {
+            lock.lock()
+            let done = scanDone
+            lock.unlock()
+            if done { break }
+            Thread.sleep(forTimeInterval: 0.05)
+        }
+        
+        lock.lock()
+        let needsModal = !scanDone
+        lock.unlock()
+        
+        if needsModal {
+            didEnterModal = true
+            lock.lock()
+            let fc = fileCount
+            let ic = imageCount
+            let vc = videoCount
+            lock.unlock()
+            statusLabel.stringValue = String(format: NSLocalizedString("scanned-files-progress", comment: "当前已扫描 %d 个文件，其中图像 %d 个，视频 %d 个"), fc, ic, vc)
+            progressIndicator.startAnimation(nil)
+            
+            let storeIsKeyEventEnabled = publicVar.isKeyEventEnabled
+            publicVar.isKeyEventEnabled = false
+            NSApp.runModal(for: panel)
+            publicVar.isKeyEventEnabled = storeIsKeyEventEnabled
+            panel.close()
+            withExtendedLifetime(cancelHandler) {}
+        }
+        
+        lock.lock()
+        contents.append(contentsOf: scannedURLs)
+        lock.unlock()
     }
     
     func scanVirtualFiles(at folderURL: URL, contents: inout [URL], properties: [URLResourceKey],
@@ -1373,15 +1486,14 @@ extension ViewController {
                 result.folderCount += 1
             }
             
-            let elapsedTime = Date().timeIntervalSince(startDate)
-            if elapsedTime >= scanInterval {
-                let shouldContinue = showScanAlert(fileCount: result.fileCount, imageCount: result.imageCount, videoCount: result.videoCount)
-                if !shouldContinue {
-                    break
-                }
-                // Reset the timer
-                startDate = Date()
-            }
+            // let elapsedTime = Date().timeIntervalSince(startDate)
+            // if elapsedTime >= scanInterval {
+            //     let shouldContinue = showScanAlert(fileCount: result.fileCount, imageCount: result.imageCount, videoCount: result.videoCount)
+            //     if !shouldContinue {
+            //         break
+            //     }
+            //     startDate = Date()
+            // }
         }
     }
 }
