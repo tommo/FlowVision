@@ -36,6 +36,9 @@ class LargeImageView: NSView {
     private var volumeObservation: NSKeyValueObservation?
     private var blackOverlayView: NSView?
     
+    var videoControlsView: VideoPlayerControlsView!
+    private var periodicTimeObserver: Any?
+    
     var exifTextView: ExifTextView!
     var ratioView: InfoView!
     var infoView: InfoView!
@@ -118,10 +121,23 @@ class LargeImageView: NSView {
                   let oldVal = change.oldValue,
                   newVal != oldVal else { return }
             self.saveVolumeChange()
+            self.videoControlsView.updateVolumeUI()
         }
 //        if #available(macOS 13.0, *) {
 //            videoView.allowsVideoFrameAnalysis = false
 //        }
+        
+        videoControlsView = VideoPlayerControlsView(frame: .zero)
+        videoControlsView.largeImageView = self
+        videoControlsView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(videoControlsView)
+        
+        NSLayoutConstraint.activate([
+            videoControlsView.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 6),
+            videoControlsView.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -6),
+            videoControlsView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -6),
+            videoControlsView.heightAnchor.constraint(equalToConstant: 32),
+        ])
         
         exifTextView = ExifTextView(frame: .zero)
         exifTextView.translatesAutoresizingMaskIntoConstraints = false
@@ -572,6 +588,7 @@ class LargeImageView: NSView {
             } else {
                 queuePlayer.play()
             }
+            videoControlsView.updatePlayPauseIcon()
         }
     }
     
@@ -594,6 +611,7 @@ class LargeImageView: NSView {
     func specifyABPlayPositionA(){
         if let queuePlayer = queuePlayer {
             abPlayPositionA = queuePlayer.currentTime()
+            videoControlsView.updateABMarkers()
             if abPlayPositionA != nil && abPlayPositionB != nil {
                 if CMTimeGetSeconds(abPlayPositionA!) > CMTimeGetSeconds(abPlayPositionB!) {
                     showInfo(NSLocalizedString("A-B Loop: A Greater than B", comment: "（视频）A-B循环：A点大于B点"))
@@ -610,6 +628,7 @@ class LargeImageView: NSView {
     func specifyABPlayPositionB(){
         if let queuePlayer = queuePlayer {
             abPlayPositionB = queuePlayer.currentTime()
+            videoControlsView.updateABMarkers()
             if abPlayPositionA != nil && abPlayPositionB != nil {
                 if CMTimeGetSeconds(abPlayPositionA!) > CMTimeGetSeconds(abPlayPositionB!) {
                     showInfo(NSLocalizedString("A-B Loop: A Greater than B", comment: "（视频）A-B循环：A点大于B点"))
@@ -656,6 +675,8 @@ class LargeImageView: NSView {
         }
         videoOrderId += 1
         videoView.isHidden = true
+        videoControlsView.hideControlsImmediately()
+        stopPeriodicTimeObserver()
         hideUnsupportedVideoOverlay()
         if let observer = videoEndObserver {
             NotificationCenter.default.removeObserver(observer)
@@ -802,6 +823,7 @@ class LargeImageView: NSView {
                     if globalVar.videoPlaySequentialPlay && abPlayPositionA == nil && abPlayPositionB == nil {
                         // 列表播放模式：播放完当前视频后自动切换到下一个
                         // List play mode: automatically switch to next video after current one finishes
+                        queuePlayer.actionAtItemEnd = .pause
                         videoEndObserver = NotificationCenter.default.addObserver(
                             forName: .AVPlayerItemDidPlayToEndTime,
                             object: playerItem,
@@ -811,14 +833,15 @@ class LargeImageView: NSView {
                             getViewController(self)?.nextLargeImage(isShowReachEndPrompt: true, firstShowThumb: true)
                         }
                     } else {
+                        queuePlayer.actionAtItemEnd = .advance
                         playerLooper = AVPlayerLooper(player: queuePlayer, templateItem: playerItem, timeRange: finalTimeRange)
                     }
                     
                     queuePlayer.play()
                     currentPlayingURL = url
                     
-                    // 开始计时器检查 playerItem.status
-                    // Start timer to check playerItem.status
+                    startPeriodicTimeObserver()
+                    
                     checkPlayerItemStatus(id: videoOrderId)
                 }
             }else{
@@ -892,15 +915,15 @@ class LargeImageView: NSView {
                 
                 // 显示控制
                 // Show controls
-                playcontrolTimer?.cancel()
-                playcontrolTimer = DispatchSource.makeTimerSource(queue: DispatchQueue.main)
-                playcontrolTimer?.schedule(deadline: .now() + 0.5)
-                playcontrolTimer?.setEventHandler { [weak self] in
-                    guard let self = self else { return }
-                    if id != videoOrderId { return }
-                    videoView.controlsStyle = .inline
-                }
-                playcontrolTimer?.resume()
+                // playcontrolTimer?.cancel()
+                // playcontrolTimer = DispatchSource.makeTimerSource(queue: DispatchQueue.main)
+                // playcontrolTimer?.schedule(deadline: .now() + 0.5)
+                // playcontrolTimer?.setEventHandler { [weak self] in
+                //     guard let self = self else { return }
+                //     if id != videoOrderId { return }
+                //     videoView.controlsStyle = .inline
+                // }
+                // playcontrolTimer?.resume()
             } else {
                 // 如果还没有准备好，继续检查
                 // If not ready yet, continue checking
@@ -1004,13 +1027,17 @@ class LargeImageView: NSView {
         // Pause video
         pauseVideo()
         
-        // 获取当前时间并计算目标时间
-        // Get current time and calculate target time
         let currentTime = player.currentTime()
-        let targetTime = CMTimeAdd(currentTime, CMTimeMakeWithSeconds(seekDuration, preferredTimescale: 600))
+        var targetSeconds = CMTimeGetSeconds(currentTime) + seekDuration
         
-        // 执行跳转
-        // Perform seek
+        if let posA = abPlayPositionA, let posB = abPlayPositionB,
+           CMTimeGetSeconds(posA) < CMTimeGetSeconds(posB) {
+            targetSeconds = max(CMTimeGetSeconds(posA), min(CMTimeGetSeconds(posB), targetSeconds))
+        } else if let duration = player.currentItem?.duration {
+            targetSeconds = max(0, min(CMTimeGetSeconds(duration), targetSeconds))
+        }
+        
+        let targetTime = CMTimeMakeWithSeconds(targetSeconds, preferredTimescale: 600)
         player.seek(to: targetTime, toleranceBefore: .zero, toleranceAfter: .zero)
         
         // 显示帧信息
@@ -1029,8 +1056,14 @@ class LargeImageView: NSView {
         let currentTime = player.currentTime()
         let currentSeconds = CMTimeGetSeconds(currentTime)
         
-        // 计算目标时间,确保在有效范围内
-        // Calculate target time, ensure within valid range
+        var minBound = 0.0
+        var maxBound = totalSeconds
+        if let posA = abPlayPositionA, let posB = abPlayPositionB,
+           CMTimeGetSeconds(posA) < CMTimeGetSeconds(posB) {
+            minBound = CMTimeGetSeconds(posA)
+            maxBound = CMTimeGetSeconds(posB)
+        }
+        
         let seekSeconds = totalSeconds < 30 ? 5.0 : 10.0
         var seconds = 0.0
         if direction == -1 {
@@ -1039,9 +1072,8 @@ class LargeImageView: NSView {
             seconds = seekSeconds
         }
         var targetSeconds = currentSeconds + seconds
-        targetSeconds = max(0, min(totalSeconds, targetSeconds))
+        targetSeconds = max(minBound, min(maxBound, targetSeconds))
         
-        // 转换为CMTime并执行跳转
         let targetTime = CMTimeMakeWithSeconds(Float64(targetSeconds), preferredTimescale: 600)
         player.seek(to: targetTime, toleranceBefore: .zero, toleranceAfter: .zero)
     }
@@ -1056,13 +1088,17 @@ class LargeImageView: NSView {
         let currentTime = player.currentTime()
         let currentSeconds = CMTimeGetSeconds(currentTime)
         
-        // 计算目标时间,确保在有效范围内
-        // Calculate target time, ensure within valid range
-        var targetSeconds = currentSeconds + seconds
-        targetSeconds = max(0, min(totalSeconds, targetSeconds))
+        var minBound = 0.0
+        var maxBound = totalSeconds
+        if let posA = abPlayPositionA, let posB = abPlayPositionB,
+           CMTimeGetSeconds(posA) < CMTimeGetSeconds(posB) {
+            minBound = CMTimeGetSeconds(posA)
+            maxBound = CMTimeGetSeconds(posB)
+        }
         
-        // 转换为CMTime并执行跳转
-        // Convert to CMTime and perform seek
+        var targetSeconds = currentSeconds + seconds
+        targetSeconds = max(minBound, min(maxBound, targetSeconds))
+        
         let targetTime = CMTimeMakeWithSeconds(Float64(targetSeconds), preferredTimescale: 600)
         player.seek(to: targetTime, toleranceBefore: .zero, toleranceAfter: .zero)
     }
@@ -1100,6 +1136,40 @@ class LargeImageView: NSView {
         guard let player = queuePlayer else { return }
         globalVar.videoVolume = player.volume
         UserDefaults.standard.set(globalVar.videoVolume, forKey: "videoVolume")
+    }
+    
+    // MARK: - Video Controls
+    
+    func startPeriodicTimeObserver() {
+        stopPeriodicTimeObserver()
+        
+        let interval = CMTime(seconds: 1.0 / 120.0, preferredTimescale: 120)
+        periodicTimeObserver = queuePlayer?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
+            guard let self = self,
+                  let player = self.queuePlayer,
+                  let currentItem = player.currentItem else { return }
+            
+            let duration = currentItem.duration
+            guard CMTimeGetSeconds(duration).isFinite else { return }
+            
+            self.videoControlsView.updateProgress(currentTime: time, duration: duration)
+        }
+    }
+    
+    func stopPeriodicTimeObserver() {
+        if let observer = periodicTimeObserver {
+            queuePlayer?.removeTimeObserver(observer)
+            periodicTimeObserver = nil
+        }
+    }
+    
+    func showVideoControls() {
+        guard file.type == .video, !videoView.isHidden, queuePlayer?.currentItem != nil else { return }
+        videoControlsView.showControls()
+    }
+    
+    func hideVideoControls() {
+        videoControlsView.hideControls()
     }
     
     func enableBlackBg() {
@@ -1375,14 +1445,20 @@ class LargeImageView: NSView {
     override func mouseExited(with event: NSEvent) {
         super.mouseExited(with: event)
         
-        // 鼠标离开视图，隐藏箭头
-        // Mouse left view, hide arrows
         hideArrowView(leftArrowImageView)
         hideArrowView(rightArrowImageView)
+        
+        if file.type == .video {
+            videoControlsView.scheduleHide(delay: 0.0)
+        }
     }
     
     override func mouseMoved(with event: NSEvent) {
         super.mouseMoved(with: event)
+        
+        if file.type == .video && !videoView.isHidden {
+            showVideoControls()
+        }
         
         // 只在启用边缘切换功能且在大图模式下才处理
         // Only process when edge switching is enabled and in large image mode
@@ -1408,7 +1484,15 @@ class LargeImageView: NSView {
         self.addTrackingArea(trackingArea)
     }
     
+    private func isEventInVideoControls(_ event: NSEvent) -> Bool {
+        guard !videoControlsView.isHidden, videoControlsView.alphaValue > 0 else { return false }
+        let location = videoControlsView.convert(event.locationInWindow, from: nil)
+        return videoControlsView.bounds.contains(location)
+    }
+    
     override func mouseDown(with event: NSEvent) {
+        if isEventInVideoControls(event) { return }
+
         // 临时按住左键也能缩放
         // Temporarily hold left button to enable zoom
         getViewController(self)!.publicVar.isLeftMouseDown = true
@@ -1476,6 +1560,8 @@ class LargeImageView: NSView {
     }
     
     override func mouseUp(with event: NSEvent) {
+        if isEventInVideoControls(event) { return }
+        
         // 临时按住左键也能缩放
         // Temporarily hold left button to enable zoom
         getViewController(self)!.publicVar.isLeftMouseDown = false
@@ -1542,6 +1628,7 @@ class LargeImageView: NSView {
     }
     
     override func mouseDragged(with event: NSEvent) {
+        if isEventInVideoControls(event) { return }
         guard let lastLocation = lastDragLocation else { return }
         if isInOcrState && !getViewController(self)!.publicVar.isRightMouseDown {return}
         
@@ -1586,6 +1673,7 @@ class LargeImageView: NSView {
             } else if file.type == .video {
                 if getViewController(self)!.publicVar.isRightMouseDown {
                     seekVideoByDrag(deltaX: dx)
+                    videoControlsView.showControls()
                 }
             }
         }
@@ -2003,6 +2091,7 @@ class LargeImageView: NSView {
         } else {
             showInfo(NSLocalizedString("Sequential Playback: Disabled", comment: "（视频）顺序播放禁用"))
         }
+        videoControlsView.updateLoopModeIcon()
         // 重新加载当前视频以应用新的播放模式
         // Reload current video to apply new playback mode
         playVideo(reload: true)

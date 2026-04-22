@@ -41,6 +41,7 @@
 		F74D555C2F0E501200C9AB85 /* EventHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74D555B2F0E500C00C9AB85 /* EventHandler.swift */; };
 		F74D555E2F0E52F800C9AB85 /* ArrowKeyLocate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74D555D2F0E52EA00C9AB85 /* ArrowKeyLocate.swift */; };
 		F7663C162F222AAC0028DF35 /* ImageEditingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7663C152F222AAC0028DF35 /* ImageEditingView.swift */; };
+		F7AA00012F9E000000AA0001 /* VideoPlayerControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AA00002F9E000000AA0001 /* VideoPlayerControlsView.swift */; };
 		F76E2EFE2C3B765C0031B0B4 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76E2EFD2C3B765C0031B0B4 /* Log.swift */; };
 		F76F6A632F4FE58800D798DC /* TempVariable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76F6A622F4FE58000D798DC /* TempVariable.swift */; };
 		F76F6A652F5B15B700D798DC /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76F6A642F5B15B200D798DC /* ProgressBar.swift */; };
@@ -161,6 +162,7 @@
 		F754F3CD2C10393700A25D12 /* libavformat.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libavformat.xcframework; path = "../ffmpeg-kit-build/bundle-apple-xcframework-macos/libavformat.xcframework"; sourceTree = "<group>"; };
 		F754F3CE2C10393700A25D12 /* libswresample.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libswresample.xcframework; path = "../ffmpeg-kit-build/bundle-apple-xcframework-macos/libswresample.xcframework"; sourceTree = "<group>"; };
 		F7663C152F222AAC0028DF35 /* ImageEditingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageEditingView.swift; sourceTree = "<group>"; };
+		F7AA00002F9E000000AA0001 /* VideoPlayerControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerControlsView.swift; sourceTree = "<group>"; };
 		F76E2EFD2C3B765C0031B0B4 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
 		F76F6A622F4FE58000D798DC /* TempVariable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TempVariable.swift; sourceTree = "<group>"; };
 		F76F6A642F5B15B200D798DC /* ProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressBar.swift; sourceTree = "<group>"; };
@@ -249,6 +251,7 @@
 				F7FAE0002F6BA00000FAE000 /* FavoritesPopoverViewController.swift */,
 				F78960F12BDCC26B00C2571B /* LargeImageView.swift */,
 				F73865D42C37B9B800837FE4 /* Layout.swift */,
+				F7AA00002F9E000000AA0001 /* VideoPlayerControlsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -466,6 +469,7 @@
 				F77098912F0E3C6B00E7D164 /* KeyShortcut.swift in Sources */,
 				F7790ED72BA5FB6A00406D35 /* CustomCollectionViewItem.swift in Sources */,
 				F7663C162F222AAC0028DF35 /* ImageEditingView.swift in Sources */,
+				F7AA00012F9E000000AA0001 /* VideoPlayerControlsView.swift in Sources */,
 				F74D555C2F0E501200C9AB85 /* EventHandler.swift in Sources */,
 				F74D55522F0E46D200C9AB85 /* Search.swift in Sources */,
 				F7FED5F32F7D0B1100E35164 /* Tagging.swift in Sources */,

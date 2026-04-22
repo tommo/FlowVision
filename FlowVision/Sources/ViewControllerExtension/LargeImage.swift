@@ -54,10 +54,6 @@ extension ViewController {
         // Stop auto-play
         stopAutoPlay()
         
-        // 停止播放视频
-        // Stop playing video
-        largeImageView.stopVideo()
-        
         // 隐藏首次使用提示
         // Hide first-time use hint
         coreAreaView.hideInfo()
@@ -96,6 +92,9 @@ extension ViewController {
             self.largeImageBgEffectView.blendingMode = .withinWindow
             // Initial mode differs when opening from file
             self.publicVar.isInLargeViewAfterAnimate=false
+            // 停止播放视频
+            // Stop playing video
+            largeImageView.stopVideo()
         }else{
             NSAnimationContext.runAnimationGroup({ context in
                 context.duration = OPEN_LARGEIMAGE_DURATION
@@ -108,6 +107,9 @@ extension ViewController {
                 // Initial mode differs when opening from file
                 self.largeImageBgEffectView.blendingMode = .withinWindow
                 self.publicVar.isInLargeViewAfterAnimate=false
+                // 停止播放视频
+                // Stop playing video
+                self.largeImageView.stopVideo()
             })
         }
         // 防止某些情况下此状态未重置，导致再打开大图时直接会滚动缩放
