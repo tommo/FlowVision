@@ -365,12 +365,12 @@ extension WindowController: NSToolbarDelegate {
                 if viewController.publicVar.autoPlayVisibleVideo {
                     identifiers.append(.isAutoPlayVisibleVideo)
                 }
-                if !viewController.publicVar.finderTagFilters.isEmpty {
-                    identifiers.append(.isTagFilterOn)
-                }
-                if !viewController.publicVar.ratingFilters.isEmpty {
-                    identifiers.append(.isRatingFilterOn)
-                }
+                // if !viewController.publicVar.finderTagFilters.isEmpty {
+                //     identifiers.append(.isTagFilterOn)
+                // }
+                // if !viewController.publicVar.ratingFilters.isEmpty {
+                //     identifiers.append(.isRatingFilterOn)
+                // }
                 if viewController.publicVar.isCurrentFolderFiltered {
                     identifiers.append(.isSearchFilterOn)
                 }
@@ -1241,39 +1241,75 @@ extension WindowController: NSToolbarDelegate {
         let menu = NSMenu()
         menu.autoenablesItems = false
         
-        let isInLargeView = viewController.publicVar.isInLargeView
-        let hasSelection = !collectionView.selectionIndexPaths.isEmpty
-        let taggingEnabled = isInLargeView || hasSelection
+        // let isInLargeView = viewController.publicVar.isInLargeView
+        // let hasSelection = !collectionView.selectionIndexPaths.isEmpty
+        // let taggingEnabled = isInLargeView || hasSelection
         
-        let activeTagNames: Set<String>
-        let isRatingEnabled: Bool
-        if isInLargeView {
-            let currentTags = viewController.largeImageView.file.finderTags
-            activeTagNames = Set(FinderTag.all.filter { currentTags.contains($0.name) }.map { $0.name })
-            isRatingEnabled = viewController.largeImageView.file.type == .image
-        } else if hasSelection {
-            let selectedURLs = viewController.publicVar.selectedUrls()
-            let tagsPerURL = selectedURLs.map { FinderTagHelper.readTags(from: $0) }
-            activeTagNames = Set(FinderTag.all.filter { tag in
-                tagsPerURL.allSatisfy { $0.contains(tag.name) }
-            }.map { $0.name })
-            isRatingEnabled = collectionView.selectionIndexPaths.allSatisfy { indexPath in
-                (collectionView.item(at: indexPath) as? CustomCollectionViewItem)?.file.type == .image
+        // let activeTagNames: Set<String>
+        // let isRatingEnabled: Bool
+        // if isInLargeView {
+        //     let currentTags = viewController.largeImageView.file.finderTags
+        //     activeTagNames = Set(FinderTag.all.filter { currentTags.contains($0.name) }.map { $0.name })
+        //     isRatingEnabled = viewController.largeImageView.file.type == .image
+        // } else if hasSelection {
+        //     let selectedURLs = viewController.publicVar.selectedUrls()
+        //     let tagsPerURL = selectedURLs.map { FinderTagHelper.readTags(from: $0) }
+        //     activeTagNames = Set(FinderTag.all.filter { tag in
+        //         tagsPerURL.allSatisfy { $0.contains(tag.name) }
+        //     }.map { $0.name })
+        //     isRatingEnabled = collectionView.selectionIndexPaths.allSatisfy { indexPath in
+        //         (collectionView.item(at: indexPath) as? CustomCollectionViewItem)?.file.type == .image
+        //     }
+        // } else {
+        //     activeTagNames = []
+        //     isRatingEnabled = false
+        // }
+        
+        // menu.addTaggingMenuItems(
+        //     activeTagNames: activeTagNames,
+        //     target: self,
+        //     isRatingEnabled: isRatingEnabled,
+        //     isEnabled: taggingEnabled
+        // ) { tagName in
+        //     viewController.handleToggleFinderTag(tagName)
+        // }
+
+        // menu.addItem(NSMenuItem.separator())
+
+        // 当前过滤状态 + 清除所有过滤条件
+        var filterParts: [String] = []
+        if !viewController.publicVar.finderTagFilters.isEmpty {
+            let names = viewController.publicVar.finderTagFilters.sorted().joined(separator: ", ")
+            var tagDesc = NSLocalizedString("Tag", comment: "标签") + ": " + names
+            if viewController.publicVar.isFinderTagFilterModeAnd {
+                tagDesc += " (AND)"
             }
-        } else {
-            activeTagNames = []
-            isRatingEnabled = false
+            if viewController.publicVar.isFinderTagFilterReversed {
+                tagDesc += " (" + NSLocalizedString("Reversed", comment: "过滤条件反转") + ")"
+            }
+            filterParts.append(tagDesc)
         }
-        
-        menu.addTaggingMenuItems(
-            activeTagNames: activeTagNames,
-            target: self,
-            isRatingEnabled: isRatingEnabled,
-            isEnabled: taggingEnabled
-        ) { tagName in
-            viewController.handleToggleFinderTag(tagName)
+        if !viewController.publicVar.ratingFilters.isEmpty {
+            let stars = viewController.publicVar.ratingFilters.sorted().map {
+                $0 == 0 ? NSLocalizedString("No Rating", comment: "无评级") : String(repeating: "★", count: $0)
+            }.joined(separator: ", ")
+            var ratingDesc = NSLocalizedString("Rating", comment: "评级") + ": " + stars
+            if viewController.publicVar.isRatingFilterReversed {
+                ratingDesc += " (" + NSLocalizedString("Reversed", comment: "过滤条件反转") + ")"
+            }
+            filterParts.append(ratingDesc)
         }
-        
+
+        let hasActiveFilter = !filterParts.isEmpty
+        let statusTitle = hasActiveFilter
+            ? NSLocalizedString("Current Filter", comment: "当前过滤") + ": " + filterParts.joined(separator: " & ")
+            : NSLocalizedString("Current Filter", comment: "当前过滤") + ": " + NSLocalizedString("None", comment: "无")
+        let statusItem = menu.addItem(withTitle: statusTitle, action: nil, keyEquivalent: "")
+        statusItem.isEnabled = false
+
+        let clearItem = menu.addItem(withTitle: NSLocalizedString("Clear All Filters", comment: "清除所有过滤条件"), action: #selector(actClearAllTagsAndRatingFilters), keyEquivalent: "")
+        clearItem.isEnabled = hasActiveFilter
+
         menu.addItem(NSMenuItem.separator())
         
         collectionView.buildFilterMenuItems(in: menu)
@@ -1914,6 +1950,11 @@ extension WindowController: NSToolbarDelegate {
     @objc func toggleClearRatingFilter(_ sender: NSMenuItem){
         guard let viewController = contentViewController as? ViewController else {return}
         viewController.handleClearRatingFilter()
+    }
+
+    @objc func actClearAllTagsAndRatingFilters(_ sender: NSMenuItem) {
+        guard let viewController = contentViewController as? ViewController else { return }
+        viewController.handleClearTagsAndRatingFilter()
     }
     
     @objc func toggleRecursiveMode(_ sender: NSMenuItem){

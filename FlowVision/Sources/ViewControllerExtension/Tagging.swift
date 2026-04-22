@@ -135,6 +135,18 @@ extension ViewController {
         refreshCollectionView(needLoadThumbPriority: true)
     }
 
+    func handleClearTagsAndRatingFilter() {
+        publicVar.isFinderTagFilterReversed = false
+        publicVar.isFinderTagFilterModeAnd = false
+        publicVar.finderTagFilters.removeAll()
+
+        publicVar.isRatingFilterReversed = false
+        publicVar.ratingFilters.removeAll()
+        
+        coreAreaView.showInfo(NSLocalizedString("Show All", comment: "显示全部"), timeOut: 0.8, cannotBeCleard: false)
+        refreshCollectionView(needLoadThumbPriority: true)
+    }
+
     func handleClearRatingFilter() {
         publicVar.isRatingFilterReversed = false
         publicVar.ratingFilters.removeAll()
