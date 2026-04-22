@@ -79,6 +79,7 @@
 		F7E0B31C2DBF0F55007CBD17 /* SDWebImageWebPCoder in Frameworks */ = {isa = PBXBuildFile; productRef = F7E0B31B2DBF0F55007CBD17 /* SDWebImageWebPCoder */; };
 		F7F600482E1E095500ED8536 /* FinderTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F600472E1E094A00ED8536 /* FinderTag.swift */; };
 		F7FAE0012F6BA00000FAE001 /* FavoritesPopoverViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7FAE0002F6BA00000FAE000 /* FavoritesPopoverViewController.swift */; };
+		F7FED5F32F7D0B1100E35164 /* Tagging.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7FED5F22F7D0B0E00E35164 /* Tagging.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -193,6 +194,7 @@
 		F7E65E342C09C7F100ACC4C0 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
 		F7F600472E1E094A00ED8536 /* FinderTag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderTag.swift; sourceTree = "<group>"; };
 		F7FAE0002F6BA00000FAE000 /* FavoritesPopoverViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesPopoverViewController.swift; sourceTree = "<group>"; };
+		F7FED5F22F7D0B0E00E35164 /* Tagging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tagging.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -308,6 +310,7 @@
 				F76F6A642F5B15B200D798DC /* ProgressBar.swift */,
 				F74D55552F0E487800C9AB85 /* RightMouseGesture.swift */,
 				F74D55512F0E46D100C9AB85 /* Search.swift */,
+				F7FED5F22F7D0B0E00E35164 /* Tagging.swift */,
 				F74D554D2F0E459600C9AB85 /* WindowManagement.swift */,
 			);
 			path = ViewControllerExtension;
@@ -465,6 +468,7 @@
 				F7663C162F222AAC0028DF35 /* ImageEditingView.swift in Sources */,
 				F74D555C2F0E501200C9AB85 /* EventHandler.swift in Sources */,
 				F74D55522F0E46D200C9AB85 /* Search.swift in Sources */,
+				F7FED5F32F7D0B1100E35164 /* Tagging.swift in Sources */,
 				F74D55542F0E47D700C9AB85 /* MemoryManagement.swift in Sources */,
 				F76F6A652F5B15B700D798DC /* ProgressBar.swift in Sources */,
 				F7AAA8BD2D9BD1F2007CE330 /* VideoProcess.swift in Sources */,

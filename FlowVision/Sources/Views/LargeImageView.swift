@@ -1685,92 +1685,16 @@ class LargeImageView: NSView {
             menu.addItem(NSMenuItem.separator())
 
             let currentTags = file.finderTags
-            let allTags = FinderTag.all
-            let activeTagNames = Set(allTags.filter { currentTags.contains($0.name) }.map { $0.name })
+            let activeTagNames = Set(FinderTag.all.filter { currentTags.contains($0.name) }.map { $0.name })
 
-            let finderTagMenu = NSMenu()
-            let finderTagTitle = NSLocalizedString("Finder Tags", comment: "Finder标签")
-            let finderTagMenuItem = NSMenuItem(title: finderTagTitle, action: nil, keyEquivalent: "")
-            finderTagMenuItem.submenu = finderTagMenu
-
-            for (i, tag) in allTags.enumerated() {
-                let item = finderTagMenu.addItem(withTitle: NSLocalizedString(tag.name, comment: ""), action: #selector(actToggleFinderTag(_:)), keyEquivalent: (i + 1 <= 9) ? "\(i + 1)" : "")
-                item.keyEquivalentModifierMask = [.command]
-                item.representedObject = tag.name
-                if activeTagNames.contains(tag.name) {
-                    item.state = .on
-                }
-                item.image = tag.dotImage
+            menu.addTaggingMenuItems(
+                activeTagNames: activeTagNames,
+                target: self,
+                isRatingEnabled: file.type == .image
+            ) { [weak self] tagName in
+                guard let self = self else { return }
+                getViewController(self)?.handleToggleFinderTag(tagName)
             }
-
-            finderTagMenu.addItem(NSMenuItem.separator())
-            finderTagMenu.addItem(withTitle: NSLocalizedString("Remove All Tags", comment: "移除所有标签"), action: #selector(actRemoveAllFinderTags), keyEquivalent: "")
-
-            finderTagMenu.addItem(NSMenuItem.separator())
-            finderTagMenu.addItem(withTitle: NSLocalizedString("Learn More...", comment: "了解更多..."), action: #selector(actTagLearnMore), keyEquivalent: "")
-
-            let colorTags = allTags//.filter { $0.colorIndex != nil && $0.colorIndex != 0 }
-            if !colorTags.isEmpty {
-                let dotsItem = NSMenuItem()
-                let dotsView = FinderTagDotsView(tags: colorTags, activeTags: activeTagNames) { [weak self, weak menu] tagName in
-                    guard let self = self, let menu = menu else { return }
-                    getViewController(self)?.handleToggleFinderTag(tagName)
-                    menu.cancelTracking()
-                }
-                dotsView.onHoverChanged = { [weak finderTagMenuItem] index in
-                    guard let finderTagMenuItem = finderTagMenuItem else { return }
-                    if index >= 0 && index < colorTags.count {
-                        let tag = colorTags[index]
-                        if activeTagNames.contains(tag.name) {
-                            finderTagMenuItem.title = NSLocalizedString("Remove", comment: "移除") + "\"\(tag.name)\""
-                        } else {
-                            finderTagMenuItem.title = NSLocalizedString("Add", comment: "添加") + "\"\(tag.name)\""
-                        }
-                        let attrTitle = NSAttributedString(
-                            string: finderTagMenuItem.title,
-                            attributes: [.foregroundColor: NSColor.secondaryLabelColor]
-                        )
-                        finderTagMenuItem.attributedTitle = attrTitle
-                    } else {
-                        finderTagMenuItem.attributedTitle = nil
-                        finderTagMenuItem.title = finderTagTitle
-                    }
-                }
-                dotsItem.view = dotsView
-                menu.addItem(dotsItem)
-            }
-
-            menu.addItem(finderTagMenuItem)
-
-            let rateSubMenu = NSMenu(title: NSLocalizedString("Rating", comment: "评级"))
-            let rateMenuItem = NSMenuItem(title: NSLocalizedString("Rating", comment: "评级"), action: nil, keyEquivalent: "")
-            rateMenuItem.submenu = rateSubMenu
-            rateMenuItem.isEnabled = file.type == .image
-
-            for rating in (1...5).reversed() {
-                let stars = String(repeating: "★", count: rating) + String(repeating: "☆", count: 5 - rating)
-                let title = "\(stars)  (\(rating))"
-                let item = NSMenuItem(title: title, action: #selector(actRate(_:)), keyEquivalent: "\(rating)")
-                item.keyEquivalentModifierMask = [.control]
-                item.tag = rating
-                item.target = self
-                rateSubMenu.addItem(item)
-            }
-
-            let clearTitle = NSLocalizedString("No Rating", comment: "无评级")
-            let clearItem = NSMenuItem(title: clearTitle, action: #selector(actRate(_:)), keyEquivalent: "0")
-            clearItem.keyEquivalentModifierMask = [.control]
-            clearItem.tag = 0
-            clearItem.target = self
-            rateSubMenu.addItem(clearItem)
-
-            rateSubMenu.addItem(NSMenuItem.separator())
-
-            let rateReadmeItem = NSMenuItem(title: NSLocalizedString("Readme...", comment: "说明..."), action: #selector(actRateReadmeAction), keyEquivalent: "")
-            rateReadmeItem.target = self
-            rateSubMenu.addItem(rateReadmeItem)
-
-            menu.addItem(rateMenuItem)
 
             menu.addItem(NSMenuItem.separator())
                         
@@ -2023,9 +1947,7 @@ class LargeImageView: NSView {
     }
 
     @objc func actRemoveAllFinderTags() {
-        guard let url = URL(string: file.path) else { return }
-        FinderTagHelper.removeAllTags(from: [url])
-        getViewController(self)?.refreshFinderTagsForVisibleItems(urls: [url])
+        getViewController(self)?.handleRemoveAllFinderTags()
     }
 
     @objc func actTagLearnMore() {
@@ -2033,13 +1955,11 @@ class LargeImageView: NSView {
     }
 
     @objc func actRate(_ sender: NSMenuItem) {
-        let rating = sender.tag
-        getViewController(self)?.handleRating(rating: rating)
-        refreshRatingStars()
+        getViewController(self)?.handleRating(rating: sender.tag)
     }
 
     @objc func actRateReadmeAction() {
-        showInformationLong(title: NSLocalizedString("Info", comment: "说明"), message: NSLocalizedString("rating-info", comment: "对于评级的说明..."))
+        getViewController(self)?.handleRatingReadme()
     }
 
     @objc func actRefresh() {

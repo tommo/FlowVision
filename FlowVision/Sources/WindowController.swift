@@ -306,6 +306,7 @@ extension NSToolbarItem.Identifier {
     static let sort = NSToolbarItem.Identifier("com.example.sort")
     static let more = NSToolbarItem.Identifier("com.example.more")
     static let favorites = NSToolbarItem.Identifier("com.example.favorites")
+    static let tagging = NSToolbarItem.Identifier("com.example.tagging")
     static let thumbSize = NSToolbarItem.Identifier("com.example.thumbSize")
     static let isRecursiveMode = NSToolbarItem.Identifier("com.example.isRecursiveMode")
     static let isSearchFilterOn = NSToolbarItem.Identifier("com.example.isSearchFilterOn")
@@ -375,6 +376,7 @@ extension WindowController: NSToolbarDelegate {
                 if viewController.publicVar.isRecursiveMode {
                     identifiers.append(.isRecursiveMode)
                 }
+                identifiers.append(.tagging)
                 identifiers.append(.viewToggle)
                 identifiers.append(.thumbSize)
                 identifiers.append(.sort)
@@ -521,7 +523,7 @@ extension WindowController: NSToolbarDelegate {
                 
                 // 指定总宽度
                 // Specify total width
-                var maxWidth = (window?.frame.width ?? 1000) - 600
+                var maxWidth = (window?.frame.width ?? 1000) - 590 - 45
                 if viewController.publicVar.autoPlayVisibleVideo {
                     maxWidth -= 45
                 }
@@ -639,6 +641,15 @@ extension WindowController: NSToolbarDelegate {
             toolbarItem.view = button
             toolbarItem.label = NSLocalizedString("up-folder", comment: "上层文件夹")
             toolbarItem.paletteLabel = NSLocalizedString("up-folder", comment: "上层文件夹")
+            toolbarItem.visibilityPriority = .low
+
+        case .tagging:
+            let button = NSButton(title: "", image: NSImage(systemSymbolName: "tag", accessibilityDescription: "")!, target: self, action: #selector(taggingAction(_:)))
+            setButtonStyle(button)
+            button.toolTip = NSLocalizedString("Tagging", comment: "标签")
+            toolbarItem.view = button
+            toolbarItem.label = NSLocalizedString("Tagging", comment: "标签")
+            toolbarItem.paletteLabel = NSLocalizedString("Tagging", comment: "标签")
             toolbarItem.visibilityPriority = .low
             
         case .viewToggle:
@@ -1193,7 +1204,86 @@ extension WindowController: NSToolbarDelegate {
             popover.show(relativeTo: targetRectInContentView, of: contentView, preferredEdge: preferredEdge)
         }
     }
+
+    @objc func taggingAction(_ sender: Any?) {
+        guard let viewController = contentViewController as? ViewController else { return }
+        let collectionView = viewController.collectionView!
+        
+        let menu = NSMenu()
+        menu.autoenablesItems = false
+        
+        let isInLargeView = viewController.publicVar.isInLargeView
+        let hasSelection = !collectionView.selectionIndexPaths.isEmpty
+        let taggingEnabled = isInLargeView || hasSelection
+        
+        let activeTagNames: Set<String>
+        let isRatingEnabled: Bool
+        if isInLargeView {
+            let currentTags = viewController.largeImageView.file.finderTags
+            activeTagNames = Set(FinderTag.all.filter { currentTags.contains($0.name) }.map { $0.name })
+            isRatingEnabled = viewController.largeImageView.file.type == .image
+        } else if hasSelection {
+            let selectedURLs = viewController.publicVar.selectedUrls()
+            let tagsPerURL = selectedURLs.map { FinderTagHelper.readTags(from: $0) }
+            activeTagNames = Set(FinderTag.all.filter { tag in
+                tagsPerURL.allSatisfy { $0.contains(tag.name) }
+            }.map { $0.name })
+            isRatingEnabled = collectionView.selectionIndexPaths.allSatisfy { indexPath in
+                (collectionView.item(at: indexPath) as? CustomCollectionViewItem)?.file.type == .image
+            }
+        } else {
+            activeTagNames = []
+            isRatingEnabled = false
+        }
+        
+        menu.addTaggingMenuItems(
+            activeTagNames: activeTagNames,
+            target: self,
+            isRatingEnabled: isRatingEnabled,
+            isEnabled: taggingEnabled
+        ) { tagName in
+            viewController.handleToggleFinderTag(tagName)
+        }
+        
+        menu.addItem(NSMenuItem.separator())
+        
+        collectionView.buildFilterMenuItems(in: menu)
+        
+        if let button = sender as? NSButton {
+            let menuLocation = NSPoint(x: 0, y: button.bounds.height + 4)
+            menu.popUp(positioning: nil, at: menuLocation, in: button)
+        } else {
+            let menuLocation = NSEvent.mouseLocation
+            menu.popUp(positioning: nil, at: menuLocation, in: nil)
+        }
+    }
     
+    @objc func actToggleFinderTag(_ sender: NSMenuItem) {
+        guard let tagName = sender.representedObject as? String else { return }
+        guard let viewController = contentViewController as? ViewController else { return }
+        viewController.handleToggleFinderTag(tagName)
+    }
+
+    @objc func actRemoveAllFinderTags() {
+        guard let viewController = contentViewController as? ViewController else { return }
+        viewController.handleRemoveAllFinderTags()
+    }
+
+    @objc func actTagLearnMore() {
+        guard let viewController = contentViewController as? ViewController else { return }
+        viewController.handleTagLearnMore()
+    }
+
+    @objc func actRate(_ sender: NSMenuItem) {
+        guard let viewController = contentViewController as? ViewController else { return }
+        viewController.handleRating(rating: sender.tag)
+    }
+
+    @objc func actRateReadmeAction() {
+        guard let viewController = contentViewController as? ViewController else { return }
+        viewController.handleRatingReadme()
+    }
+
     @objc func showThumbSizeMenu(_ sender: Any?) {
         guard let viewController = contentViewController as? ViewController else {return}
 

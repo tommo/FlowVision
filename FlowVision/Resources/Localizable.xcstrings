@@ -32872,7 +32872,7 @@
       }
     },
     "Tagging" : {
-      "comment" : "标签（设置里的面板）",
+      "comment" : "标签",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
