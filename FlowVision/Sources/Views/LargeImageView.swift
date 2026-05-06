@@ -12,7 +12,7 @@ class LargeImageView: NSView {
 
     var imageView: CustomLargeImageView!
     
-    var snapshotQueue = [NSView?]()
+    var snapshotQueue = [(view: NSView, tag: Int)]()
     var videoView: LargeAVPlayerView!
     // var videoPlayer: AVPlayer?
     var playerItem: AVPlayerItem?
@@ -691,9 +691,25 @@ class LargeImageView: NSView {
         currentPlayingURL = nil
         pausedBySeek = false
         isVideoMetadataUpdated = false
-        while snapshotQueue.count > 0{
-            snapshotQueue.first??.removeFromSuperview()
-            snapshotQueue.removeFirst()
+        removeAllSnapshots()
+    }
+
+    private func removeAllSnapshots() {
+        for entry in snapshotQueue {
+            entry.view.removeFromSuperview()
+        }
+        snapshotQueue.removeAll()
+    }
+
+    private func removeSnapshotsTaggedBefore(id: Int) {
+        var i = 0
+        while i < snapshotQueue.count {
+            if snapshotQueue[i].tag < id {
+                snapshotQueue[i].view.removeFromSuperview()
+                snapshotQueue.remove(at: i)
+            } else {
+                i += 1
+            }
         }
     }
 
@@ -725,7 +741,7 @@ class LargeImageView: NSView {
             let snapshot = captureSnapshot(of: self)
             if let snapshot = snapshot {
                 self.addSubview(snapshot)
-                snapshotQueue.append(snapshot)
+                snapshotQueue.append((view: snapshot, tag: videoOrderId))
                 
                 // DEBUG: 给快照视图加上明显的红色边框，方便录屏一帧帧分析
                 // 当前帧若有红色边框 = snapshot 已经在屏幕上；没有边框 = 看到的是 video / 黑帧
@@ -860,10 +876,7 @@ class LargeImageView: NSView {
                         checkPlayerItemStatus(id: videoOrderId)
                     }
                 }else{
-                    while snapshotQueue.count > 0{
-                        snapshotQueue.first??.removeFromSuperview()
-                        snapshotQueue.removeFirst()
-                    }
+                    removeAllSnapshots()
                     currentPlayingURL = nil
                     showUnsupportedVideoOverlay()
                 }
@@ -913,10 +926,9 @@ class LargeImageView: NSView {
                     snapshotTimer?.setEventHandler { [weak self] in
                         guard let self = self else { return }
                         if id != videoOrderId { return }
-                        while snapshotQueue.count > 0{
-                            snapshotQueue.first??.removeFromSuperview()
-                            snapshotQueue.removeFirst()
-                        }
+                        // 只撤 tag < id 的 snapshot
+                        // Only remove snapshots whose tag < id
+                        removeSnapshotsTaggedBefore(id: id)
                         if abPlayPositionA != nil && abPlayPositionB != nil && lastActionTriggerdReload == "ABPlay" {
                             showInfo(NSLocalizedString("A-B Loop Active", comment: "（视频）A-B循环启用"))
                             lastActionTriggerdReload = nil
@@ -927,12 +939,9 @@ class LargeImageView: NSView {
                     }
                     snapshotTimer?.resume()
                 } else {
-                    // 立即隐藏快照
-                    // Hide snapshot immediately
-                    while snapshotQueue.count > 0{
-                        snapshotQueue.first??.removeFromSuperview()
-                        snapshotQueue.removeFirst()
-                    }
+                    // 立即隐藏快照（仅撤 tag < id 的，保留属于后续视频的 snapshot）
+                    // Hide snapshot immediately (only remove snapshots tagged before id)
+                    removeSnapshotsTaggedBefore(id: id)
                 }
                 
                 // 显示控制
@@ -1460,6 +1469,7 @@ class LargeImageView: NSView {
     }
     
     func showUnsupportedVideoOverlay() {
+        hideVideoControls()
         unsupportedVideoOverlay.isHidden = false
     }
     
