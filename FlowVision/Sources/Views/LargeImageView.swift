@@ -1805,7 +1805,8 @@ class LargeImageView: NSView {
         mouseUp(with: event)
         getViewController(self)!.publicVar.isRightMouseDown = false
         
-        if !doNotPopRightMenu && event.locationInWindow.y < getViewController(self)!.mainScrollView.bounds.height {
+        let rightMouseUpYmax = getViewController(self)!.mainScrollView.bounds.height - (globalVar.autoHideToolbar ? 40 : 0)
+        if !doNotPopRightMenu && event.locationInWindow.y < rightMouseUpYmax {
             // 弹出菜单
             // Pop up menu
             let menu = NSMenu(title: "Custom Menu")

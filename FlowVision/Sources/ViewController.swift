@@ -676,7 +676,7 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
                     // 仅在视频范围内响应，范围外的由largeImageView中的鼠标事件正常处理
                     // Only respond within video range, outside range handled normally by mouse events in largeImageView
                     largeImageView.mouseDown(with: event)
-                    // return nil
+                    return nil
                 }
             }
             
@@ -701,7 +701,7 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
                     // 仅在视频范围内响应，范围外的由largeImageView中的鼠标事件正常处理
                     // Only respond within video range, outside range handled normally by mouse events in largeImageView
                     largeImageView.mouseUp(with: event)
-                    // return nil
+                    return nil
                 }
             }
             
@@ -751,6 +751,8 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
             }
             self.handleScrollWheel(event)
             if publicVar.isInLargeView && largeImageView.file.type == .video {
+                // 视频播放器默认行为会利用滚动事件调整播放进度，所以不传递事件
+                // The default behavior of the video player will use the scroll event to adjust the playback progress, so don't pass the event
                 return nil
             }else{
                 return event
@@ -783,19 +785,15 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
                 return event
             }
             if true || self.coreAreaView.frame.contains(event.locationInWindow) {
-                if publicVar.isInLargeView {
-                    self.largeImageView.rightMouseUp(with: event)
-                }else{
+                if !publicVar.isInLargeView {
                     self.drawingView?._rightMouseUp(with: event)
+                    self._rightMouseUp(with: event)
+                }else if largeImageView.file.type == .video {
+                    self.largeImageView.rightMouseUp(with: event)
+                    return nil
                 }
-                // 不传递事件
-                // Don't pass event
-                return nil
-            } else {
-                // 继续传递事件
-                // Continue passing event
-                return event
             }
+            return event
         }
 
         eventMonitorRightMouseDown = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
@@ -806,19 +804,15 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
                 return event
             }
             if true || self.coreAreaView.frame.contains(event.locationInWindow) {
-                if publicVar.isInLargeView {
-                    self.largeImageView.rightMouseDown(with: event)
-                }else{
+                if !publicVar.isInLargeView {
                     self.drawingView?._rightMouseDown(with: event)
+                    self._rightMouseDown(with: event)
+                }else if largeImageView.file.type == .video {
+                    self.largeImageView.rightMouseDown(with: event)
+                    return nil
                 }
-                // 不传递事件
-                // Don't pass event
-                return nil
-            } else {
-                // 继续传递事件
-                // Continue passing event
-                return event
             }
+            return event
         }
 
         eventMonitorRightMouseDragged = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDragged) { [weak self] event in
@@ -829,19 +823,15 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
                 return event
             }
             if true || self.coreAreaView.frame.contains(event.locationInWindow) {
-                if publicVar.isInLargeView {
-                    self.largeImageView.rightMouseDragged(with: event)
-                }else{
+                if !publicVar.isInLargeView {
                     self.drawingView?._rightMouseDragged(with: event)
+                    self._rightMouseDragged(with: event)
+                }else if largeImageView.file.type == .video {
+                    self.largeImageView.rightMouseDragged(with: event)
+                    return nil
                 }
-                // 不传递事件
-                // Don't pass event
-                return nil
-            } else {
-                // 继续传递事件
-                // Continue passing event
-                return event
             }
+            return event
         }
         
         // =========结束事件监听配置==========
@@ -2274,7 +2264,7 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
         }
     }
     
-    override func rightMouseDown(with event: NSEvent) {
+    func _rightMouseDown(with event: NSEvent) {
         // publicVar.isRightMouseDown = true
         if !largeImageView.isHidden {return}
         
@@ -2282,10 +2272,10 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
         lastMouseLocation = initialMouseLocation
         gestureState = .none
 
-        super.rightMouseDown(with: event)
+        // super.rightMouseDown(with: event)
     }
 
-    override func rightMouseDragged(with event: NSEvent) {
+    func _rightMouseDragged(with event: NSEvent) {
         if !largeImageView.isHidden {return}
         if event.locationInWindow.y > self.mainScrollView.bounds.height {
             return
@@ -2322,10 +2312,10 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
         
         analyzeGesture(doAction: false)
 
-        super.rightMouseDragged(with: event)
+        // super.rightMouseDragged(with: event)
     }
 
-    override func rightMouseUp(with event: NSEvent) {
+    func _rightMouseUp(with event: NSEvent) {
         // publicVar.isRightMouseDown = false
         if !largeImageView.isHidden {return}
         
@@ -2352,7 +2342,7 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
             popTitlebarMenu(with: event)
         }
 
-        super.rightMouseUp(with: event)
+        // super.rightMouseUp(with: event)
     }
     
     func getSelectedURLs() -> [URL] {
