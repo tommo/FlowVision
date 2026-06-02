@@ -216,8 +216,8 @@ class CustomCollectionViewItem: NSCollectionViewItem {
             layoutCoefficient = 1.2
         case .grid:
             layoutCoefficient = 1.1
-        case .detail:
-            layoutCoefficient = 1.0
+        default:
+            fatalError()
         }
 
         return max(1.0, min(2.5, baseScale * layoutCoefficient))

@@ -784,8 +784,10 @@ extension ViewController {
                 collectionView.collectionViewLayout=publicVar.waterfallLayout
             }else if publicVar.profile.layoutType == .grid {
                 collectionView.collectionViewLayout=publicVar.gridLayout
-            }else {
+            }else if publicVar.profile.layoutType == .justified {
                 collectionView.collectionViewLayout=publicVar.justifiedLayout
+            }else {
+                fatalError()
             }
             publicVar.isNeedChangeLayoutType = false
         }
