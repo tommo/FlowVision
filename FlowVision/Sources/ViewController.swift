@@ -434,6 +434,13 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
     var search_useRegex: Bool = false
     var search_isCaseSensitive: Bool = false
     var search_isUseFullPath: Bool = false
+
+    // 筛选
+    // Filter
+    var search_filterText: String = ""
+    var search_filterUseRegex: Bool = false
+    var search_filterIsCaseSensitive: Bool = false
+    var search_filterIsUseFullPath: Bool = false
     
     // 快速搜索
     // Quick search

@@ -313,14 +313,23 @@ extension ViewController {
 
         // 搜索过滤
         // Search filter
-        let searchText = searchField?.stringValue ?? search_searchText
+        let searchText = search_filterText
         if publicVar.isFilenameFilterOn && searchText != "" {
+            let savedUseRegex = search_useRegex
+            let savedIsCaseSensitive = search_isCaseSensitive
+            let savedIsUseFullPath = search_isUseFullPath
+            search_useRegex = search_filterUseRegex
+            search_isCaseSensitive = search_filterIsCaseSensitive
+            search_isUseFullPath = search_filterIsUseFullPath
             contents = contents.filter { url in
                 if let fileName = getFileNameForSearch(path: url.absoluteString) {
                     return isSearchMatch(fileName: fileName, searchText: searchText, forceUseRegex: false)
                 }
                 return true
             }
+            search_useRegex = savedUseRegex
+            search_isCaseSensitive = savedIsCaseSensitive
+            search_isUseFullPath = savedIsUseFullPath
         }
 
         // 过滤标签
