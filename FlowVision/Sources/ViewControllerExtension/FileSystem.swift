@@ -540,6 +540,7 @@ extension ViewController {
                 var addDate: Date?
                 var doNotActualRead = false
                 var finderTags: [String] = []
+                var isHiddenFile = false
                 do{
                     // 文件在前i个，目录在后面
                     // Files in first i items, directories after
@@ -570,6 +571,7 @@ extension ViewController {
                            downloadingStatus != .current {
                             doNotActualRead=true
                         }
+                        isHiddenFile = resourceValues.isHidden ?? false
                         let tags = (try? filesUrlInFolder[i].resourceValues(forKeys: [.tagNamesKey]))?.tagNames ?? []
                         finderTags = tags
                         // finderTags = resourceValues.tagNames ?? []
@@ -603,6 +605,7 @@ extension ViewController {
                            {
                             doNotActualRead=true
                         }
+                        isHiddenFile = resourceValues.isHidden ?? false
                         let tags = (try? subFolders[i-fileCount].resourceValues(forKeys: [.tagNamesKey]))?.tagNames ?? []
                         finderTags = tags
                         // finderTags = resourceValues.tagNames ?? []
@@ -613,6 +616,7 @@ extension ViewController {
                 // log("i:",i,"path:",fileSortKey.path.removingPercentEncoding)
                 let newFileModel=FileModel(path: fileSortKey.path, ver: fileDB.db[SortKeyDir(folderpath)]!.ver, isDir: isDir, isAlias: isAlias, fileSize: fileSize, createDate: createDate, modDate: modDate, addDate: addDate, doNotActualRead: doNotActualRead)
                 newFileModel.finderTags = finderTags
+                newFileModel.isHidden = isHiddenFile
                 // log(fileSortKey.path)
                 if let file = fileDB.db[SortKeyDir(folderpath)]!.files[fileSortKey] {
                     if file.path == fileSortKey.path {
@@ -620,6 +624,7 @@ extension ViewController {
                         file.isDir=isDir
                         file.isAlias=isAlias
                         file.doNotActualRead=doNotActualRead
+                        file.isHidden=isHiddenFile
                         file.finderTags=finderTags
                         // 检查文件或文件夹是否有变化(文件夹fileSize为nil)
                         // Check if file or folder has changed (folder fileSize is nil)

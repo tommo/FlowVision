@@ -99,7 +99,14 @@ extension CustomOutlineViewManager: NSOutlineViewDelegate {
 //        backgroundView.frame = view.bounds
 //        backgroundView.autoresizingMask = [.width, .height]
         
-        view.alphaValue = globalVar.cutItemPaths.contains(treeNode.fullPath) ? 0.4 : 1.0
+        let isCut = globalVar.cutItemPaths.contains(treeNode.fullPath)
+        if isCut {
+            view.alphaValue = 0.4
+        } else if treeNode.isHidden {
+            view.alphaValue = 0.5
+        } else {
+            view.alphaValue = 1.0
+        }
         
         return view
     }

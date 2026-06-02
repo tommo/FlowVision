@@ -521,6 +521,7 @@ class FileModel {
     var createDate: Date?
     var addDate: Date?
     var doNotActualRead: Bool = false
+    var isHidden: Bool = false
     var rotate: Int = 0
     var imageInfo: ImageInfo?
     var getThumbFailed = false
@@ -609,6 +610,7 @@ class TreeNode: NSObject {
     var fullPath: String
     var children: [TreeNode]?
     var hasChild: Bool = false
+    var isHidden: Bool = false
     
     init(name: String, children: [TreeNode]? = nil, fullPath: String = "") {
         self.name = name
@@ -834,6 +836,7 @@ class TreeViewModel {
                     }
                 }
                 var newNode = TreeNode(name: name, fullPath: fullPath)
+                newNode.isHidden = (try? subFolder.resourceValues(forKeys: [.isHiddenKey]))?.isHidden ?? false
                 
                 if oldChildren?.contains(where: { $0.name == newNode.name }) ?? false {
                     newNode = oldChildren!.first(where: { $0.name == newNode.name })!

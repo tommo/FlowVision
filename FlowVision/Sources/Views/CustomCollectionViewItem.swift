@@ -556,7 +556,14 @@ class CustomCollectionViewItem: NSCollectionViewItem {
     
     func updateCutDimEffect() {
         let isCut = globalVar.cutItemPaths.contains(file.path)
-        let targetAlpha: CGFloat = isCut ? 0.4 : 1.0
+        let targetAlpha: CGFloat
+        if isCut {
+            targetAlpha = 0.4
+        } else if file.isHidden {
+            targetAlpha = 0.5
+        } else {
+            targetAlpha = 1.0
+        }
         // 由于布局过程中alpha值可能会被重置，需要等待布局完成后再设置
         // Since the alpha value may be reset during layout, it needs to be set after layout is complete
         DispatchQueue.main.async { [weak self] in
