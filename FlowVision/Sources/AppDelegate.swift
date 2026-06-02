@@ -339,6 +339,28 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
                    let originalSize=getImageInfo(url: URL(string: getFileSchemeAbsPath(path))!, needMetadata: false)?.size{
                     globalVar.startSpeedUpImageSizeCache=originalSize
                 }
+
+                let isShowHiddenFile = UserDefaults.standard.value(forKey: "isShowHiddenFile") as? Bool ?? false
+                let isInExternalVolume = VolumeManager.shared.isExternalVolume(url)
+                if !isInExternalVolume {
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        let folderPath = getFileSchemeAbsParentFolderPath(path)
+                        guard let folderURL = URL(string: folderPath) else { return }
+                        let properties: [URLResourceKey] = [.isHiddenKey, .isDirectoryKey]
+                        guard let contents = try? FileManager.default.contentsOfDirectory(at: folderURL, includingPropertiesForKeys: properties, options: []) else { return }
+                        var extCounts: [String: Int] = [:]
+                        for url in contents {
+                            guard let values = try? url.resourceValues(forKeys: [.isHiddenKey, .isDirectoryKey]) else { continue }
+                            if values.isHidden == true && !isShowHiddenFile { continue }
+                            if values.isDirectory == true { continue }
+                            let ext = url.pathExtension.lowercased()
+                            extCounts[ext, default: 0] += 1
+                        }
+                        globalVar.launchFileFolderExtCountsLock.lock()
+                        globalVar.launchFileFolderExtCounts[folderPath] = extCounts
+                        globalVar.launchFileFolderExtCountsLock.unlock()
+                    }
+                }
             }
         }
 

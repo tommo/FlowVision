@@ -36,6 +36,8 @@ class GlobalVar{
     // Temporary shared state variables, used for new window startup
     var isLaunchFromFile = false
     var startSpeedUpImageSizeCache: NSSize? = nil
+    var launchFileFolderExtCounts: [String: [String: Int]] = [:]
+    var launchFileFolderExtCountsLock = NSLock()
     
     // 剪切模式标志，剪切时置为true，粘贴时检查此标志决定执行移动还是复制
     // Cut mode flag, set to true on cut, checked on paste to decide move or copy
