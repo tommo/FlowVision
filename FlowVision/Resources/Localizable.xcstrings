@@ -30497,7 +30497,7 @@
       }
     },
     "scanned-files-progress" : {
-      "comment" : "当前已扫描 %d 个文件，其中图像 %d 个，视频 %d 个",
+      "comment" : "已扫描 %d 个文件，其中图像 %d 个，视频 %d 个",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -30592,13 +30592,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "当前已扫描 %d 个文件，其中图像 %d 个，视频 %d 个"
+            "value" : "已扫描 %d 个文件，其中图像 %d 个，视频 %d 个"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "當前已掃描 %d 個文件，其中圖像 %d 個，視頻 %d 個"
+            "value" : "已掃描 %d 個文件，其中圖像 %d 個，視頻 %d 個"
           }
         }
       }
