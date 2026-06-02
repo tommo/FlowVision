@@ -2058,8 +2058,7 @@ class LargeImageView: NSView {
     
     @objc func actOpenInNewTab() {
         if let appDelegate=NSApplication.shared.delegate as? AppDelegate {
-            globalVar.isLaunchFromFile=true
-            if let windowController = appDelegate.createNewWindow(file.path) {
+            if let windowController = appDelegate.createNewWindow(file.path, isLaunchFromFile: true) {
                 appDelegate.openImageInTargetWindow(file.path, windowController: windowController)
             }
         }

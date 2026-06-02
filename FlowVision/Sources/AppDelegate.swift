@@ -292,7 +292,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
         return true
     }
     
-    func createNewWindow(_ path: String? = nil) -> WindowController? {
+    func createNewWindow(_ path: String? = nil, useCreateWindowShowDelay: Bool = false, isLaunchFromFile: Bool = false) -> WindowController? {
         log("Start createNewWindow")
         // Start createNewWindow
         if isWindowNumMax() {
@@ -327,7 +327,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
                 }
             }
         }
-        
+
+        // 设置临时全局变量
+        // Set temporary global variable
+        globalVar.isLaunchFromFile = isLaunchFromFile
+
         // 加载 Main.storyboard
         // Load Main.storyboard
         let storyboard = NSStoryboard(name: "Main", bundle: nil)
@@ -345,7 +349,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
         
         // 显示窗口
         // Show window
-        if !globalVar.isLaunchFromFile || !globalVar.useCreateWindowShowDelay {
+        if !useCreateWindowShowDelay {
             windowController.showWindow(self)
         }
         
@@ -403,15 +407,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
                 _ = createNewWindow(file)
                 return
             }else{
-                globalVar.isLaunchFromFile=true
+                var useCreateWindowShowDelay = false
                 if windowControllers.count == 0 || globalVar.autoHideToolbar {
                     // 直到大图加载完毕后才显示窗口，用来减少首次启动的画面闪动
                     // Don't show window until large image is loaded, to reduce startup screen flicker
                     // 对于多标签页情况的第二个标签页，使用此会导致大图的缩放是按上次记忆而不是当前窗口实际大小，因此除这两种情况外不适合使用
                     // For second tab in multi-tab case, using this will cause large image scaling to be based on last memory rather than current window actual size, so it's not suitable except for these two cases
-                    globalVar.useCreateWindowShowDelay=true
+                    useCreateWindowShowDelay = true
                 }
-                if let targetWindowController = createNewWindow(file) {
+                if let targetWindowController = createNewWindow(file, useCreateWindowShowDelay: useCreateWindowShowDelay, isLaunchFromFile: true) {
                     openImageInTargetWindow(file, windowController: targetWindowController)
                 }
                 return
@@ -494,8 +498,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
                 if isDirectory {
                     _ = createNewWindow(result.absoluteString)
                 }else{
-                    globalVar.isLaunchFromFile=true
-                    if let windowController = createNewWindow(result.absoluteString) {
+                    if let windowController = createNewWindow(result.absoluteString, isLaunchFromFile: true) {
                         openImageInTargetWindow(result.absoluteString, windowController: windowController)
                     }
                 }

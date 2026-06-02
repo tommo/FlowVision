@@ -17,8 +17,7 @@ extension ViewController {
                 if lastPath.hasSuffix("/") {
                     _ = appDelegate.createNewWindow(lastPath)
                 } else {
-                    globalVar.isLaunchFromFile=true
-                    if let windowController = appDelegate.createNewWindow(lastPath) {
+                    if let windowController = appDelegate.createNewWindow(lastPath, isLaunchFromFile: true) {
                         appDelegate.openImageInTargetWindow(lastPath, windowController: windowController)
                     }
                 }

@@ -224,8 +224,7 @@ extension ViewController {
                 } else if globalVar.HandledImageAndRawExtensions.contains(resolved.pathExtension.lowercased()) ||
                     (globalVar.useInternalPlayer && globalVar.HandledNativeSupportedVideoExtensions.contains(resolved.pathExtension.lowercased())) {
                     if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
-                        globalVar.isLaunchFromFile = true
-                        if let windowController = appDelegate.createNewWindow(resolvedAbsPath) {
+                        if let windowController = appDelegate.createNewWindow(resolvedAbsPath, isLaunchFromFile: true) {
                             appDelegate.openImageInTargetWindow(resolvedAbsPath, windowController: windowController)
                         }
                     }
@@ -913,7 +912,6 @@ extension ViewController {
                !window.isVisible {
                 windowController.showWindow(nil)
             }
-            globalVar.useCreateWindowShowDelay = false
             
             // 加载Exif
             // Load Exif

@@ -1283,8 +1283,7 @@ class CustomCollectionViewItem: NSCollectionViewItem {
             if file.type == .folder {
                 _ = appDelegate.createNewWindow(file.path)
             }else if file.type == .image || (file.type == .video && globalVar.useInternalPlayer && globalVar.HandledNativeSupportedVideoExtensions.contains(file.ext.lowercased())){
-                globalVar.isLaunchFromFile=true
-                if let windowController = appDelegate.createNewWindow(file.path) {
+                if let windowController = appDelegate.createNewWindow(file.path, isLaunchFromFile: true) {
                     appDelegate.openImageInTargetWindow(file.path, windowController: windowController)
                 }
             }else{
