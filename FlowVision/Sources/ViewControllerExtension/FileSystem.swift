@@ -1243,10 +1243,10 @@ extension ViewController {
         var videoCount = 0
         var totalSize = 0
         
-        var description: String {
-            let text = String(format: NSLocalizedString("statistic-content", comment: "(统计内容)"),folderCount,fileCount,imageCount,videoCount,readableFileSize(totalSize))
-            return text
-        }
+        // var description: String {
+        //     let text = String(format: NSLocalizedString("statistic-content", comment: "(统计内容)"),folderCount,fileCount,imageCount,videoCount,readableFileSize(totalSize))
+        //     return text
+        // }
 
         var descriptionOneLine: String {
             let text = String(format: NSLocalizedString("statistic-content-one-line", comment: "(统计内容一行)"),fileCount,readableFileSize(totalSize))
@@ -1261,14 +1261,11 @@ extension ViewController {
         }
         if urls.isEmpty {return}
 
-        // log(readFinderExtendedAttributes(url: urls[0], needFinderInfo: true), level: .debug)
-        // return;
-        
         if urls.count == 1 {
             let url = urls[0]
             var isDirectory: ObjCBool = false
             if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) {
-                
+
                 let aliasResourceValues = try? url.resourceValues(forKeys: [.isAliasFileKey, .isSymbolicLinkKey])
                 let isAliasFile = aliasResourceValues?.isAliasFile ?? false
                 let isSymlink = aliasResourceValues?.isSymbolicLink ?? false
@@ -1286,194 +1283,167 @@ extension ViewController {
                     aliasTypeLabel = ""
                 }
                 let resolvedIsDirectory = resolvedUrl.hasDirectoryPath
-                
+
                 if !isDirectory.boolValue && !resolvedIsDirectory {
-
-                    let file = FileModel(path: "", ver: 0)
-                    file.path = url.absoluteString
-                    file.fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize)
-                    file.createDate = (try? url.resourceValues(forKeys: [.creationDateKey]).creationDate)
-                    file.modDate = (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate)
-                    file.addDate = (try? url.resourceValues(forKeys: [.addedToDirectoryDateKey]).addedToDirectoryDate)
-                    
-                    let ext = resolvedUrl.pathExtension.lowercased()
-                    if globalVar.HandledImageAndRawExtensions.contains(ext) || globalVar.HandledVideoExtensions.contains(ext) {
-                        file.imageInfo = getImageInfo(url: resolvedUrl, needMetadata: true)
-                    }
-                    let exifData = convertExifData(file: file)
-                    var formatedExifData = formatExifData(exifData ?? [:], isVideo: globalVar.HandledVideoExtensions.contains(ext), needWarp: false)
-
-                    formatedExifData.insert((NSLocalizedString("File Path", comment: "文件路径"), "\u{2066}" + url.deletingLastPathComponent().path + "/" + "\u{2069}"), at: 0)
-
-                    if isAlias {
-                        formatedExifData.insert((NSLocalizedString("Original Path", comment: "原始路径"), "\u{2066}" + resolvedUrl.path + "\u{2069}"), at: 0)
-                        formatedExifData.insert((NSLocalizedString("Alias Type", comment: "替身类型"), aliasTypeLabel), at: 0)
-                    }
-                    
-                    let separator = "--------------------"
-                    
-                    func formatExifDataAligned(_ exifData: [(String, Any)]) -> String {
-                        
-                        let font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
-                        // 计算最长的key的长度
-                        let maxKeyLength = exifData.map { $0.0.size(withAttributes: [.font: font]).width }.max() ?? 0
-                        
-                        // 格式化每一行，使冒号对齐
-                        let formattedLines = exifData.map { (key, value) -> String in
-                            if key == "-" {
-                                return separator
-                            }
-                            let keyLength = key.size(withAttributes: [.font: font]).width
-                            let padding = String(repeating: " ", count: Int((maxKeyLength - keyLength) / " ".size(withAttributes: [.font: font]).width))
-                            return "\(key):\(padding) \(value)"
-                        }
-                        
-                        return formattedLines.joined(separator: "\n")
-                    }
-                    
-                    var text = formatExifDataAligned(formatedExifData)
-
-                    func appendSection(_ content: String) {
-                        text += (text.hasSuffix(separator) ? "\n" : "\n" + separator + "\n") + content
-                    }
-
-                    if globalVar.HandledVideoExtensions.contains(ext),
-                       let videoRawMetadata = getVideoMetadataFFmpeg(for: resolvedUrl),
-                       let specificMetadata = getVideoMetadataFormatedFFmpeg(for: resolvedUrl) {
-                        let metadataAligned = formatExifDataAligned(specificMetadata)
-                        appendSection(metadataAligned + "\n" + separator + "\n" + videoRawMetadata)
-                    }
-                    
-                    if globalVar.HandledImageAndRawExtensions.contains(ext) {
-                        func formatDictionary(_ dictionary: [String: Any], indentLevel: Int = 0, outputFormat: String = "json", sort: Bool = true) -> String {
-                            let sortedDictionary: [(String, Any)]
-                            if sort {
-                                sortedDictionary = dictionary.sorted { $0.key < $1.key }
-                            } else {
-                                sortedDictionary = Array(dictionary)
-                            }
-                            
-                            // 添加错误处理和防护
-                            if outputFormat == "json" {
-                                do {
-                                    let sortedDict = Dictionary(uniqueKeysWithValues: sortedDictionary)
-                                    // 移除不能被JSON序列化的值
-                                    let serializableDict = sortedDict.filter { (_, value) in
-                                        JSONSerialization.isValidJSONObject([value])
-                                    }
-                                    let jsonData = try JSONSerialization.data(withJSONObject: serializableDict, options: [.prettyPrinted, .sortedKeys])
-                                    if let jsonString = String(data: jsonData, encoding: .utf8) {
-                                        return jsonString
-                                    }
-                                } catch {
-                                    log("JSON serialization error: \(error)", level: .warn)
-                                }
-                                return "{}"
-                            } else {
-                                let indent = String(repeating: "  ", count: indentLevel)
-                                var formattedString = ""
-                                for (key, value) in sortedDictionary {
-                                    if let nestedDict = value as? [String: Any] {
-                                        formattedString += "\(indent)\(key):\n"
-                                        formattedString += formatDictionary(nestedDict, indentLevel: indentLevel + 1, outputFormat: outputFormat, sort: sort)
-                                    } else {
-                                        formattedString += "\(indent)\(key): \(value)\n"
-                                    }
-                                }
-                                return formattedString
-                            }
-                        }
-
-                        if let properties = file.imageInfo?.properties {
-                            if properties.count > 0 {
-                                appendSection(formatDictionary(properties).replacingOccurrences(of: "\\/", with: "/"))
-                            }
-                        }
-                        if let metadata = file.imageInfo?.metadata,
-                           let tags = CGImageMetadataCopyTags(metadata) as NSArray? {
-                            
-                            var result = [String: Any]()
-                            for tag in tags {
-                                if CFGetTypeID(tag.self as CFTypeRef) == CGImageMetadataTagGetTypeID() {
-                                    let tagMetadata = tag as! CGImageMetadataTag
-                                    
-                                    if let cfName = CGImageMetadataTagCopyName(tagMetadata),
-                                       let cfPrefix = CGImageMetadataTagCopyPrefix(tagMetadata),
-                                       String(cfPrefix) != "exif" && String(cfPrefix) != "aux" && String(cfPrefix) != "exifEX" && String(cfPrefix) != "tiff" {
-                                        let name = String(cfPrefix) + "::" + String(cfName)
-                                        let value = CGImageMetadataTagCopyValue(tagMetadata)
-                                        result[name] = value
-                                    }
-                                }
-                            }
-                            if result.count > 0 {
-                                appendSection(formatDictionary(result).replacingOccurrences(of: "\\/", with: "/"))
-                            }
-                        }
-                    }
-                    
-                    if text.hasSuffix(separator) {
-                        text = String(text.dropLast(separator.count)).trimmingCharacters(in: .newlines)
-                    }
-                    showInformationLong(title: NSLocalizedString("File Info", comment: "文件信息"), message: text, width: 400)
-                    
+                    presentSingleFileInfo(url: url, resolvedUrl: resolvedUrl, isAlias: isAlias, aliasTypeLabel: aliasTypeLabel)
                     return
                 } else {
-                    let targetUrl = url
-                    
-                    var folderInfoData: [(String, Any)] = []
-
-                    if isAlias {
-                        folderInfoData.append((NSLocalizedString("Alias Type", comment: "替身类型"), aliasTypeLabel))
-                        folderInfoData.append((NSLocalizedString("Original Path", comment: "原始路径"), "\u{2066}" + resolvedUrl.path + "\u{2069}"))
-                    }
-                    
-                    folderInfoData.append((NSLocalizedString("Folder Path", comment: "文件夹路径"), "\u{2066}" + targetUrl.path + "\u{2069}"))
-                    folderInfoData.append((NSLocalizedString("Folder Name", comment: "文件夹名称"), targetUrl.lastPathComponent))
-                    
-                    if let creationDate = (try? targetUrl.resourceValues(forKeys: [.creationDateKey]).creationDate) {
-                        folderInfoData.append((NSLocalizedString("Creation Date", comment: "创建日期"), formatDateToCurrentTimeZone(creationDate)))
-                    }
-                    if let modDate = (try? targetUrl.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) {
-                        folderInfoData.append((NSLocalizedString("Modification Date", comment: "修改日期"), formatDateToCurrentTimeZone(modDate)))
-                    }
-                    if let addDate = (try? targetUrl.resourceValues(forKeys: [.addedToDirectoryDateKey]).addedToDirectoryDate) {
-                        folderInfoData.append((NSLocalizedString("Added Date", comment: "添加日期"), formatDateToCurrentTimeZone(addDate)))
-                    }
-                    
-                    let separator = "--------------------"
-                    let font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
-                    let maxKeyLength = folderInfoData.map { $0.0.size(withAttributes: [.font: font]).width }.max() ?? 0
-                    let formattedLines = folderInfoData.map { (key, value) -> String in
-                        let keyLength = key.size(withAttributes: [.font: font]).width
-                        let padding = String(repeating: " ", count: Int((maxKeyLength - keyLength) / " ".size(withAttributes: [.font: font]).width))
-                        return "\(key):\(padding) \(value)"
-                    }
-                    var text = formattedLines.joined(separator: "\n")
-                    
-                    let result = FolderStatisticInfo()
-                    runFolderStatisticScanWithProgress(
-                        statusProvider: { result.description },
-                        work: { [weak self] isCancelled, onProgress in
-                            self?.getFolderStatistic(resolvedUrl, result: result, isCancelled: isCancelled, onProgress: onProgress)
-                        }
-                    )
-                    text += "\n" + separator + "\n" + result.description
-                    
-                    showInformationLong(title: NSLocalizedString("Folder Info", comment: "文件夹信息"), message: text, width: 400)
-                    
+                    presentSingleFolderInfo(url: url, resolvedUrl: resolvedUrl, isAlias: isAlias, aliasTypeLabel: aliasTypeLabel)
                     return
                 }
             }
         }
-        
-        // 以下是针对非单个图像、视频文件的处理
-        // Below is handling for non-single image/video files
-        
-        let result = FolderStatisticInfo()
-        
+
+        presentMultiSelectionInfo(urls: urls)
+    }
+
+    // MARK: - Info window builders
+
+    private func presentSingleFileInfo(url: URL, resolvedUrl: URL, isAlias: Bool, aliasTypeLabel: String) {
+        let file = FileModel(path: "", ver: 0)
+        file.path = url.absoluteString
+        file.fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize)
+        file.createDate = (try? url.resourceValues(forKeys: [.creationDateKey]).creationDate)
+        file.modDate = (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate)
+        file.addDate = (try? url.resourceValues(forKeys: [.addedToDirectoryDateKey]).addedToDirectoryDate)
+
+        let ext = resolvedUrl.pathExtension.lowercased()
+        let isImage = globalVar.HandledImageAndRawExtensions.contains(ext)
+        let isVideo = globalVar.HandledVideoExtensions.contains(ext)
+        if isImage || isVideo {
+            file.imageInfo = getImageInfo(url: resolvedUrl, needMetadata: true)
+        }
+        let exifData = convertExifData(file: file)
+        var formatedExifData = formatExifData(exifData ?? [:], isVideo: isVideo, needWarp: false)
+
+        formatedExifData.insert((NSLocalizedString("File Path", comment: "文件路径"), bidiIsolate(url.deletingLastPathComponent().path + "/")), at: 0)
+        if isAlias {
+            formatedExifData.insert((NSLocalizedString("Original Path", comment: "原始路径"), bidiIsolate(resolvedUrl.path)), at: 0)
+            formatedExifData.insert((NSLocalizedString("Alias Type", comment: "替身类型"), aliasTypeLabel), at: 0)
+        }
+
+        var sections = splitExifIntoSections(formatedExifData)
+
+        if isVideo {
+            // if let formatted = getVideoMetadataFormatedFFmpeg(for: resolvedUrl), !formatted.isEmpty {
+            //     let pairs = formatted.map { ($0.0, $0.1) }
+            //     sections.append(FileInfoSection(
+            //         title: NSLocalizedString("Video", comment: "视频"),
+            //         kind: .keyValue(pairs)
+            //     ))
+            // }
+            if let formatted = getVideoMetadataFormatedFFmpeg(for: resolvedUrl), !formatted.isEmpty {
+                sections.append(contentsOf: splitVideoMetadataIntoSections(formatted))
+            }
+            if let raw = getVideoMetadataFFmpeg(for: resolvedUrl), !raw.isEmpty {
+                sections.append(FileInfoSection(
+                    title: true ? "Video Metadata" : NSLocalizedString("Video Metadata", comment: "视频元数据"),
+                    kind: .textBlock(raw, monospace: true),
+                    collapsible: true,
+                    initiallyCollapsed: true
+                ))
+            }
+        }
+
+        if isImage {
+            if let properties = file.imageInfo?.properties, !properties.isEmpty {
+                let json = jsonDumpString(properties)
+                sections.append(FileInfoSection(
+                    title: true ? "EXIF Metadata" : NSLocalizedString("EXIF Metadata", comment: "EXIF元数据"),
+                    kind: .textBlock(json, monospace: true),
+                    collapsible: true,
+                    initiallyCollapsed: true
+                ))
+            }
+            if let metadata = file.imageInfo?.metadata,
+               let tags = CGImageMetadataCopyTags(metadata) as NSArray? {
+                var result = [String: Any]()
+                for tag in tags {
+                    if CFGetTypeID(tag.self as CFTypeRef) == CGImageMetadataTagGetTypeID() {
+                        let tagMetadata = tag as! CGImageMetadataTag
+                        if let cfName = CGImageMetadataTagCopyName(tagMetadata),
+                           let cfPrefix = CGImageMetadataTagCopyPrefix(tagMetadata),
+                           String(cfPrefix) != "exif" && String(cfPrefix) != "aux" && String(cfPrefix) != "exifEX" && String(cfPrefix) != "tiff" {
+                            let name = String(cfPrefix) + "::" + String(cfName)
+                            let value = CGImageMetadataTagCopyValue(tagMetadata)
+                            result[name] = value
+                        }
+                    }
+                }
+                if !result.isEmpty {
+                    let json = jsonDumpString(result)
+                    sections.append(FileInfoSection(
+                        title: true ? "XMP / IPTC Metadata" : NSLocalizedString("XMP / IPTC Metadata", comment: "XMP/IPTC元数据"),
+                        kind: .textBlock(json, monospace: true),
+                        collapsible: true,
+                        initiallyCollapsed: true
+                    ))
+                }
+            }
+        }
+
+        let header = buildHeaderForSingleFile(
+            url: url,
+            resolvedUrl: resolvedUrl,
+            file: file,
+            isAlias: isAlias,
+            aliasTypeLabel: aliasTypeLabel
+        )
+
+        FileInfoWindowController.show(
+            header: header,
+            sections: sections,
+            revealURLs: [url],
+            anchorWindow: view.window
+        )
+    }
+
+    private func presentSingleFolderInfo(url: URL, resolvedUrl: URL, isAlias: Bool, aliasTypeLabel: String) {
+        var generalPairs: [(String, String)] = []
+        if isAlias {
+            generalPairs.append((NSLocalizedString("Alias Type", comment: "替身类型"), aliasTypeLabel))
+            generalPairs.append((NSLocalizedString("Original Path", comment: "原始路径"), bidiIsolate(resolvedUrl.path)))
+        }
+        generalPairs.append((NSLocalizedString("Folder Path", comment: "文件夹路径"), bidiIsolate(url.path)))
+        generalPairs.append((NSLocalizedString("Folder Name", comment: "文件夹名称"), url.lastPathComponent))
+
+        if let creationDate = (try? url.resourceValues(forKeys: [.creationDateKey]).creationDate) {
+            generalPairs.append((NSLocalizedString("Creation Date", comment: "创建日期"), formatDateToCurrentTimeZone(creationDate)))
+        }
+        if let modDate = (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) {
+            generalPairs.append((NSLocalizedString("Modification Date", comment: "修改日期"), formatDateToCurrentTimeZone(modDate)))
+        }
+        if let addDate = (try? url.resourceValues(forKeys: [.addedToDirectoryDateKey]).addedToDirectoryDate) {
+            generalPairs.append((NSLocalizedString("Added Date", comment: "添加日期"), formatDateToCurrentTimeZone(addDate)))
+        }
+
+        let stat = FolderStatisticInfo()
         runFolderStatisticScanWithProgress(
-            statusProvider: { result.description },
+            statusProvider: { stat.descriptionOneLine },
+            work: { [weak self] isCancelled, onProgress in
+                self?.getFolderStatistic(resolvedUrl, result: stat, isCancelled: isCancelled, onProgress: onProgress)
+            }
+        )
+
+        let sections: [FileInfoSection] = [
+            FileInfoSection(title: NSLocalizedString("General", comment: "通用"), kind: .keyValue(generalPairs)),
+            FileInfoSection(title: NSLocalizedString("Statistics", comment: "统计信息"), kind: .keyValue(folderStatisticPairs(stat))),
+        ]
+
+        let header = buildHeaderForFolder(url: url, resolvedUrl: resolvedUrl, isAlias: isAlias, aliasTypeLabel: aliasTypeLabel)
+
+        FileInfoWindowController.show(
+            header: header,
+            sections: sections,
+            revealURLs: [url],
+            anchorWindow: view.window
+        )
+    }
+
+    private func presentMultiSelectionInfo(urls: [URL]) {
+        let stat = FolderStatisticInfo()
+        runFolderStatisticScanWithProgress(
+            statusProvider: { stat.descriptionOneLine },
             work: { [weak self] isCancelled, onProgress in
                 for url in urls {
                     if isCancelled() { return }
@@ -1484,36 +1454,204 @@ extension ViewController {
                         if isAlias {
                             let resolvedUrl = try? URL(resolvingAliasFileAt: url)
                             if let resolved = resolvedUrl, resolved.hasDirectoryPath {
-                                result.folderCount += 1
-                                result.totalSize += aliasSize
+                                stat.folderCount += 1
+                                stat.totalSize += aliasSize
                             } else {
-                                result.fileCount += 1
+                                stat.fileCount += 1
                                 let ext = (resolvedUrl ?? url).pathExtension.lowercased()
                                 if globalVar.HandledImageAndRawExtensions.contains(ext) {
-                                    result.imageCount += 1
+                                    stat.imageCount += 1
                                 } else if globalVar.HandledVideoExtensions.contains(ext) {
-                                    result.videoCount += 1
+                                    stat.videoCount += 1
                                 }
-                                result.totalSize += aliasSize
+                                stat.totalSize += aliasSize
                             }
                         } else if isDirectory.boolValue {
-                            result.folderCount += 1
-                            self?.getFolderStatistic(url, result: result, isCancelled: isCancelled, onProgress: onProgress)
+                            stat.folderCount += 1
+                            self?.getFolderStatistic(url, result: stat, isCancelled: isCancelled, onProgress: onProgress)
                         } else {
-                            result.fileCount += 1
+                            stat.fileCount += 1
                             if globalVar.HandledImageAndRawExtensions.contains(url.pathExtension.lowercased()) {
-                                result.imageCount += 1
+                                stat.imageCount += 1
                             } else if globalVar.HandledVideoExtensions.contains(url.pathExtension.lowercased()) {
-                                result.videoCount += 1
+                                stat.videoCount += 1
                             }
-                            result.totalSize += aliasSize
+                            stat.totalSize += aliasSize
                         }
                     }
                 }
             }
         )
-        
-        showInformation(title: NSLocalizedString("Statistic", comment: "统计信息"), message: result.description)
+
+        let sections: [FileInfoSection] = [
+            FileInfoSection(title: NSLocalizedString("Statistics", comment: "统计信息"), kind: .keyValue(folderStatisticPairs(stat))),
+        ]
+
+        let header = buildHeaderForMultiSelection(urls: urls)
+
+        FileInfoWindowController.show(
+            header: header,
+            sections: sections,
+            revealURLs: urls,
+            anchorWindow: view.window
+        )
+    }
+
+    // MARK: - Section / header helpers
+
+    private func bidiIsolate(_ s: String) -> String {
+        // \u{2066} = LRI, \u{2069} = PDI — keep filesystem paths rendered LTR even in RTL locales
+        return "\u{2066}" + s + "\u{2069}"
+    }
+
+    private func splitExifIntoSections(_ data: [(String, Any)]) -> [FileInfoSection] {
+        var groups: [[(String, String)]] = [[]]
+        for (k, v) in data {
+            if k == "-" {
+                groups.append([])
+            } else {
+                let valueStr: String
+                if let s = v as? String {
+                    valueStr = s
+                } else {
+                    valueStr = String(describing: v)
+                }
+                groups[groups.count - 1].append((k, valueStr))
+            }
+        }
+        let titles = [
+            NSLocalizedString("General", comment: "通用"),
+            NSLocalizedString("Image", comment: "图像"),
+            NSLocalizedString("GPS", comment: "GPS"),
+        ]
+        var result: [FileInfoSection] = []
+        var idx = 0
+        for group in groups {
+            if group.isEmpty { idx += 1; continue }
+            let title = idx < titles.count ? titles[idx] : NSLocalizedString("Other", comment: "其他")
+            result.append(FileInfoSection(title: title, kind: .keyValue(group)))
+            idx += 1
+        }
+        return result
+    }
+
+    /// Split the flat FFprobe output (which uses ("-","-") to separate streams) into
+    /// semantic sections: container info, then one section per video/audio stream.
+    /// Detection relies on the `index` key being the first localized key in each
+    /// stream's translation map for both video and audio.
+    private func splitVideoMetadataIntoSections(_ pairs: [(String, String)]) -> [FileInfoSection] {
+        let videoIndexKey = NSLocalizedString("VideoMetadata-Index", comment: "索引")
+        let audioIndexKey = NSLocalizedString("AudioMetadata-Index", comment: "索引")
+
+        var sections: [(title: String, pairs: [(String, String)])] = []
+        var currentTitle = NSLocalizedString("Container", comment: "容器")
+        var currentPairs: [(String, String)] = []
+        var videoCount = 0
+        var audioCount = 0
+
+        func flush() {
+            if !currentPairs.isEmpty {
+                sections.append((currentTitle, currentPairs))
+                currentPairs = []
+            }
+        }
+
+        for p in pairs {
+            if p.0 == "-" { continue }
+            if p.0 == videoIndexKey {
+                flush()
+                videoCount += 1
+                currentTitle = videoCount > 1
+                    ? NSLocalizedString("Video Stream", comment: "视频流") + " \(videoCount)"
+                    : NSLocalizedString("Video Stream", comment: "视频流")
+            } else if p.0 == audioIndexKey {
+                flush()
+                audioCount += 1
+                currentTitle = audioCount > 1
+                    ? NSLocalizedString("Audio Stream", comment: "音频流") + " \(audioCount)"
+                    : NSLocalizedString("Audio Stream", comment: "音频流")
+            }
+            currentPairs.append(p)
+        }
+        flush()
+
+        return sections.map { FileInfoSection(title: $0.title, kind: .keyValue($0.pairs)) }
+    }
+
+    private func folderStatisticPairs(_ stat: FolderStatisticInfo) -> [(String, String)] {
+        return [
+            (NSLocalizedString("Folders", comment: "目录"), "\(stat.folderCount)"),
+            (NSLocalizedString("Files", comment: "文件"), "\(stat.fileCount)"),
+            (NSLocalizedString("Images", comment: "图像"), "\(stat.imageCount)"),
+            (NSLocalizedString("Videos", comment: "视频"), "\(stat.videoCount)"),
+            (NSLocalizedString("Total Size", comment: "总大小"), readableFileSize(stat.totalSize)),
+        ]
+    }
+
+    private func jsonDumpString(_ dictionary: [String: Any]) -> String {
+        let sorted = dictionary.sorted { $0.key < $1.key }
+        let dict = Dictionary(uniqueKeysWithValues: sorted)
+        let serializable = dict.filter { (_, value) in JSONSerialization.isValidJSONObject([value]) }
+        do {
+            let data = try JSONSerialization.data(withJSONObject: serializable, options: [.prettyPrinted, .sortedKeys])
+            if let s = String(data: data, encoding: .utf8) {
+                return s.replacingOccurrences(of: "\\/", with: "/")
+            }
+        } catch {
+            log("JSON serialization error: \(error)", level: .warn)
+        }
+        return "{}"
+    }
+
+    private func buildHeaderForSingleFile(url: URL, resolvedUrl: URL, file: FileModel, isAlias: Bool, aliasTypeLabel: String) -> FileInfoHeader {
+        let icon = NSWorkspace.shared.icon(forFile: resolvedUrl.path)
+        icon.size = NSSize(width: 64, height: 64)
+
+        var parts: [String] = []
+        if let t = (try? url.resourceValues(forKeys: [.localizedTypeDescriptionKey]))?.localizedTypeDescription, !t.isEmpty {
+            parts.append(t)
+        } else if !url.pathExtension.isEmpty {
+            parts.append(url.pathExtension.uppercased())
+        }
+        if let s = file.imageInfo?.size, s.width > 0, s.height > 0 {
+            parts.append("\(Int(s.width))×\(Int(s.height))")
+        }
+        if let size = file.fileSize {
+            parts.append(readableFileSize(size))
+        }
+        if isAlias {
+            parts.append(aliasTypeLabel)
+        }
+        return FileInfoHeader(icon: icon, title: url.lastPathComponent, subtitle: parts.joined(separator: " · "))
+    }
+
+    private func buildHeaderForFolder(url: URL, resolvedUrl: URL, isAlias: Bool, aliasTypeLabel: String) -> FileInfoHeader {
+        let icon = NSWorkspace.shared.icon(forFile: resolvedUrl.path)
+        icon.size = NSSize(width: 64, height: 64)
+        var parts: [String] = []
+        let typeDesc = (try? url.resourceValues(forKeys: [.localizedTypeDescriptionKey]))?.localizedTypeDescription
+        if let t = typeDesc, !t.isEmpty {
+            parts.append(t)
+        } else {
+            parts.append(NSLocalizedString("Folder", comment: "文件夹"))
+        }
+        if isAlias {
+            parts.append(aliasTypeLabel)
+        }
+        let title = url.lastPathComponent.isEmpty ? url.path : url.lastPathComponent
+        return FileInfoHeader(icon: icon, title: title, subtitle: parts.joined(separator: " · "))
+    }
+
+    private func buildHeaderForMultiSelection(urls: [URL]) -> FileInfoHeader {
+        let icon: NSImage
+        if urls.count == 1, let first = urls.first {
+            icon = NSWorkspace.shared.icon(forFile: first.path)
+        } else {
+            icon = NSImage(named: NSImage.multipleDocumentsName) ?? NSImage()
+        }
+        icon.size = NSSize(width: 64, height: 64)
+        let title = String(format: NSLocalizedString("%d items selected", comment: "选中 %d 项"), urls.count)
+        return FileInfoHeader(icon: icon, title: title, subtitle: "")
     }
     
     private func runFolderStatisticScanWithProgress(
