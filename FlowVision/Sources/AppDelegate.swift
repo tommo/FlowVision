@@ -207,6 +207,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
         if let isEnterKeyToOpen = UserDefaults.standard.value(forKey: "isEnterKeyToOpen") as? Bool {
             globalVar.isEnterKeyToOpen = isEnterKeyToOpen
         }
+        if let isEscKeyToGoBack = UserDefaults.standard.value(forKey: "isEscKeyToGoBack") as? Bool {
+            globalVar.isEscKeyToGoBack = isEscKeyToGoBack
+        }
         if let clickEdgeToSwitchImage = UserDefaults.standard.value(forKey: "clickEdgeToSwitchImage") as? Bool {
             globalVar.clickEdgeToSwitchImage = clickEdgeToSwitchImage
         }

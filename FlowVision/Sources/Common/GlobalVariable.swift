@@ -95,6 +95,7 @@ class GlobalVar{
     }
     var useQuickSearch = false
     var isEnterKeyToOpen = false
+    var isEscKeyToGoBack = true
     var clickEdgeToSwitchImage = false
     var scrollMouseWheelToZoom = false
     var openLastFolder = true
