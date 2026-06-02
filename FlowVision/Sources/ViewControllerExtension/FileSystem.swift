@@ -377,7 +377,7 @@ extension ViewController {
         // 如果找平级则无视子目录
         // If finding same level, ignore subdirectories
         if folderURL == initURL && sameLevel { subFolders.removeAll() }
-        subFolders.sort { $0.lastPathComponent.lowercased().localizedStandardCompare($1.lastPathComponent.lowercased()) == .orderedAscending }
+        subFolders.sort { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
         
         // 过滤出需处理文件列表
         // Filter out files to process

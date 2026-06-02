@@ -55,7 +55,7 @@ class SortKey: Comparable {
     
     init(_ path: String, createDate: Date = Date(), modDate: Date = Date(), addDate: Date = Date() , size: Int = 0, isDir: Bool = false, isInSameDir: Bool = false, needGetProperties: Bool = false, sortType: SortType, isSortFolderFirst: Bool, isSortUseFullPath: Bool, randomSeed: Int) {
         self.path = path
-        self.pathCmp = path.lowercased()
+        self.pathCmp = path
         self.createDate = createDate
         self.modDate = modDate
         self.addDate = addDate
@@ -246,19 +246,19 @@ class SortKey: Comparable {
             if lhs.createDate == rhs.createDate {return isSmallerPath(lhs: lhs, rhs: rhs)}
             return lhs.createDate < rhs.createDate
         }else if lhs.sortType == .createDateZ {
-            if lhs.createDate == rhs.createDate {return isSmallerPath(lhs: rhs, rhs: lhs)}
+            if lhs.createDate == rhs.createDate {return isSmallerPath(lhs: lhs, rhs: rhs)}
             return lhs.createDate > rhs.createDate
         }else if lhs.sortType == .modDateA {
             if lhs.modDate == rhs.modDate {return isSmallerPath(lhs: lhs, rhs: rhs)}
             return lhs.modDate < rhs.modDate
         }else if lhs.sortType == .modDateZ {
-            if lhs.modDate == rhs.modDate {return isSmallerPath(lhs: rhs, rhs: lhs)}
+            if lhs.modDate == rhs.modDate {return isSmallerPath(lhs: lhs, rhs: rhs)}
             return lhs.modDate > rhs.modDate
         }else if lhs.sortType == .addDateA {
             if lhs.addDate == rhs.addDate {return isSmallerPath(lhs: lhs, rhs: rhs)}
             return lhs.addDate < rhs.addDate
         }else if lhs.sortType == .addDateZ {
-            if lhs.addDate == rhs.addDate {return isSmallerPath(lhs: rhs, rhs: lhs)}
+            if lhs.addDate == rhs.addDate {return isSmallerPath(lhs: lhs, rhs: rhs)}
             return lhs.addDate > rhs.addDate
         }else if lhs.sortType == .extA {
             if lhs.ext() == rhs.ext() {return isSmallerPath(lhs: lhs, rhs: rhs)}
@@ -289,7 +289,7 @@ class SortKey: Comparable {
                 if lhs.exifDate == rhs.exifDate {return isSmallerPath(lhs: lhs, rhs: rhs)}
                 return lhs.exifDate < rhs.exifDate
             }else if lhs.sortType == .exifDateZ {
-                if lhs.exifDate == rhs.exifDate {return isSmallerPath(lhs: rhs, rhs: lhs)}
+                if lhs.exifDate == rhs.exifDate {return isSmallerPath(lhs: lhs, rhs: rhs)}
                 return lhs.exifDate > rhs.exifDate
             }
         }
@@ -389,17 +389,17 @@ class SortKey: Comparable {
         // 加锁，防止多线程访问异常
         // Lock to prevent multi-thread access exceptions
         keyTransformedDictLock.lock()
-        if keyTransformedDict[lhs.pathCmp] != nil {
-            lhs_paths=keyTransformedDict[lhs.pathCmp]!
+        if keyTransformedDict[lhs.path] != nil {
+            lhs_paths=keyTransformedDict[lhs.path]!
         }else{
-            lhs_paths=lhs.path.replacingOccurrences(of: "file://", with: "").trimmingCharacters(in: CharacterSet(charactersIn: "/")).components(separatedBy: "/").map(){$0.removingPercentEncoding!.lowercased()}
-            keyTransformedDict[lhs.pathCmp]=lhs_paths
+            lhs_paths=lhs.pathCmp.replacingOccurrences(of: "file://", with: "").trimmingCharacters(in: CharacterSet(charactersIn: "/")).components(separatedBy: "/").map(){$0.removingPercentEncoding!}
+            keyTransformedDict[lhs.path]=lhs_paths
         }
-        if keyTransformedDict[rhs.pathCmp] != nil {
-            rhs_paths=keyTransformedDict[rhs.pathCmp]!
+        if keyTransformedDict[rhs.path] != nil {
+            rhs_paths=keyTransformedDict[rhs.path]!
         }else{
-            rhs_paths=rhs.path.replacingOccurrences(of: "file://", with: "").trimmingCharacters(in: CharacterSet(charactersIn: "/")).components(separatedBy: "/").map(){$0.removingPercentEncoding!.lowercased()}
-            keyTransformedDict[rhs.pathCmp]=rhs_paths
+            rhs_paths=rhs.pathCmp.replacingOccurrences(of: "file://", with: "").trimmingCharacters(in: CharacterSet(charactersIn: "/")).components(separatedBy: "/").map(){$0.removingPercentEncoding!}
+            keyTransformedDict[rhs.path]=rhs_paths
         }
         // 解锁
         // Unlock
@@ -789,13 +789,13 @@ class TreeViewModel {
                     subFolders.sort {
                         let a = localizedNameCache[$0] ?? $0.lastPathComponent
                         let b = localizedNameCache[$1] ?? $1.lastPathComponent
-                        return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                        return a.localizedStandardCompare(b) == .orderedAscending
                     }
                 } else if sortType == .pathZ {
                     subFolders.sort {
                         let a = localizedNameCache[$0] ?? $0.lastPathComponent
                         let b = localizedNameCache[$1] ?? $1.lastPathComponent
-                        return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedDescending
+                        return a.localizedStandardCompare(b) == .orderedDescending
                     }
                 } else if sortType == .createDateA {
                     subFolders.sort {
@@ -804,7 +804,7 @@ class TreeViewModel {
                         if d1 == d2 {
                             let a = localizedNameCache[$0] ?? $0.lastPathComponent
                             let b = localizedNameCache[$1] ?? $1.lastPathComponent
-                            return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                            return a.localizedStandardCompare(b) == .orderedAscending
                         }
                         return d1 < d2
                     }
@@ -815,7 +815,7 @@ class TreeViewModel {
                         if d1 == d2 {
                             let a = localizedNameCache[$0] ?? $0.lastPathComponent
                             let b = localizedNameCache[$1] ?? $1.lastPathComponent
-                            return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                            return a.localizedStandardCompare(b) == .orderedAscending
                         }
                         return d1 > d2
                     }
@@ -826,7 +826,7 @@ class TreeViewModel {
                         if d1 == d2 {
                             let a = localizedNameCache[$0] ?? $0.lastPathComponent
                             let b = localizedNameCache[$1] ?? $1.lastPathComponent
-                            return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                            return a.localizedStandardCompare(b) == .orderedAscending
                         }
                         return d1 < d2
                     }
@@ -837,7 +837,7 @@ class TreeViewModel {
                         if d1 == d2 {
                             let a = localizedNameCache[$0] ?? $0.lastPathComponent
                             let b = localizedNameCache[$1] ?? $1.lastPathComponent
-                            return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                            return a.localizedStandardCompare(b) == .orderedAscending
                         }
                         return d1 > d2
                     }
@@ -848,7 +848,7 @@ class TreeViewModel {
                         if d1 == d2 {
                             let a = localizedNameCache[$0] ?? $0.lastPathComponent
                             let b = localizedNameCache[$1] ?? $1.lastPathComponent
-                            return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                            return a.localizedStandardCompare(b) == .orderedAscending
                         }
                         return d1 < d2
                     }
@@ -859,7 +859,7 @@ class TreeViewModel {
                         if d1 == d2 {
                             let a = localizedNameCache[$0] ?? $0.lastPathComponent
                             let b = localizedNameCache[$1] ?? $1.lastPathComponent
-                            return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                            return a.localizedStandardCompare(b) == .orderedAscending
                         }
                         return d1 > d2
                     }
@@ -867,7 +867,7 @@ class TreeViewModel {
                     subFolders.sort {
                         let a = localizedNameCache[$0] ?? $0.lastPathComponent
                         let b = localizedNameCache[$1] ?? $1.lastPathComponent
-                        return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                        return a.localizedStandardCompare(b) == .orderedAscending
                     }
                 }
             }

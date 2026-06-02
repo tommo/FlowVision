@@ -368,8 +368,8 @@ extension ViewController {
             var fileName = _fileName
             var searchText = _searchText
             if !search_isCaseSensitive {
-                fileName = fileName.lowercased()
-                searchText = searchText.lowercased()
+                fileName = fileName.localizedLowercase
+                searchText = searchText.localizedLowercase
             }
             var result = fileName.contains(searchText)
             if globalVar.usePinyinSearch {
