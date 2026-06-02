@@ -306,7 +306,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
         return true
     }
     
-    func createNewWindow(_ path: String? = nil, useCreateWindowShowDelay: Bool = false, isLaunchFromFile: Bool = false, urlsToSelect: [URL]? = nil) -> WindowController? {
+    func createNewWindow(_ path: String? = nil, useCreateWindowShowDelay: Bool = false, isLaunchFromFile: Bool = false, urlsToSelect: [URL]? = nil, openInBackground: Bool = false) -> WindowController? {
         log("Start createNewWindow")
         // Start createNewWindow
         if isWindowNumMax() {
@@ -364,7 +364,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
         // 显示窗口
         // Show window
         if !useCreateWindowShowDelay {
-            windowController.showWindow(self)
+            if openInBackground {
+                // 后台打开：显示窗口但不抢占焦点
+                // Open in background: show window without stealing focus
+                windowController.window?.orderBack(nil)
+            } else {
+                windowController.showWindow(self)
+            }
         }
         
         // 获取 contentViewController 并调用其函数

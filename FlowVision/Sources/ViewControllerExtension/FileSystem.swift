@@ -996,7 +996,9 @@ extension ViewController {
                     if indexPath.item < curItemCount {
                         publicVar.folderStepForLocate.removeAll()
                         collectionView.scrollToItems(at: [indexPath], scrollPosition: .nearestHorizontalEdge)
+                        collectionView.delegate?.collectionView?(collectionView, shouldSelectItemsAt: [indexPath])
                         collectionView.selectItems(at: [indexPath], scrollPosition: [])
+                        collectionView.delegate?.collectionView?(collectionView, didSelectItemsAt: [indexPath])
                         setLoadThumbPriority(ifNeedVisable: true)
                     }
                 } else {
@@ -1045,7 +1047,9 @@ extension ViewController {
             
             if !matchedIndexPaths.isEmpty {
                 let isFirstMatch = collectionView.selectionIndexPaths.isEmpty
+                collectionView.delegate?.collectionView?(collectionView, shouldSelectItemsAt: Set(matchedIndexPaths))
                 collectionView.selectItems(at: Set(matchedIndexPaths), scrollPosition: [])
+                collectionView.delegate?.collectionView?(collectionView, didSelectItemsAt: Set(matchedIndexPaths))
                 if isFirstMatch {
                     collectionView.scrollToItems(at: [matchedIndexPaths[0]], scrollPosition: .nearestHorizontalEdge)
                     setLoadThumbPriority(ifNeedVisable: true)

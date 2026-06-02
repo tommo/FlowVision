@@ -1009,7 +1009,9 @@ class CustomCollectionViewItem: NSCollectionViewItem {
                 
                 if !viewController.publicVar.isInLargeView && !viewController.publicVar.isInLargeViewAfterAnimate {
                     if event.modifierFlags.contains(.command) || event.modifierFlags.contains(.shift) {
-                        actOpenInNewTab()
+                        // 加 Shift 为前台打开，否则后台打开
+                        // Hold Shift to open in foreground, otherwise open in background
+                        openInNewTab(openInBackground: !event.modifierFlags.contains(.shift), openSingleFile: true)
                     }else{
                         viewController.openLargeImageFromIndexPath(selfIndexPath)
                         viewController.largeImageView.videoPreventDoubleClickOpenPauseFlag = true
@@ -1044,7 +1046,9 @@ class CustomCollectionViewItem: NSCollectionViewItem {
                    let viewController=getViewController(collectionView){
                     
                     if !viewController.publicVar.isInLargeView && !viewController.publicVar.isInLargeViewAfterAnimate {
-                        actOpenInNewTab()
+                        // 加 Shift 为前台打开，否则后台打开
+                        // Hold Shift to open in foreground, otherwise open in background
+                        openInNewTab(openInBackground: !event.modifierFlags.contains(.shift), openSingleFile: true)
                     }
                 }
             }
@@ -1300,10 +1304,33 @@ class CustomCollectionViewItem: NSCollectionViewItem {
     }
     
     @objc func actOpenInNewTab() {
+        // 按住 Cmd 点击菜单项时在后台打开
+        // Hold Cmd when clicking the menu item to open in background
+        openInNewTab(openInBackground: NSEvent.modifierFlags.contains(.command))
+    }
+
+    @objc func actOpenInNewTabInBackground() {
+        openInNewTab(openInBackground: true)
+    }
+
+    func openInNewTab(openInBackground: Bool, openSingleFile: Bool = false) {
         guard let appDelegate = NSApplication.shared.delegate as? AppDelegate else { return }
         guard let viewController = getViewController(collectionView) else { return }
         
-        let urls = viewController.publicVar.selectedUrls()
+        var urls = viewController.publicVar.selectedUrls()
+
+        if openSingleFile {
+            urls = [URL(string: file.path)!]
+        }
+        
+        if !self.isSelected {
+            if let collectionView = self.collectionView,
+               let indexPath = collectionView.indexPath(for: self),
+               let toSelect = collectionView.delegate?.collectionView?(collectionView, shouldSelectItemsAt: [indexPath]) {
+                collectionView.selectItems(at: toSelect, scrollPosition: [])
+                collectionView.delegate?.collectionView?(collectionView, didSelectItemsAt: toSelect)
+            }
+        }
         
         for url in urls {
             let resolvedUrl: URL
@@ -1318,10 +1345,10 @@ class CustomCollectionViewItem: NSCollectionViewItem {
             let ext = resolvedUrl.pathExtension.lowercased()
             let isDir = (try? resolvedUrl.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
             if isDir {
-                _ = appDelegate.createNewWindow(path)
+                _ = appDelegate.createNewWindow(path, openInBackground: openInBackground)
             } else if globalVar.HandledImageAndRawExtensions.contains(ext) ||
                       (globalVar.useInternalPlayer && globalVar.HandledNativeSupportedVideoExtensions.contains(ext)) {
-                if let windowController = appDelegate.createNewWindow(path, isLaunchFromFile: true) {
+                if let windowController = appDelegate.createNewWindow(path, isLaunchFromFile: true, openInBackground: openInBackground) {
                     appDelegate.openImageInTargetWindow(path, windowController: windowController)
                 }
             } else {

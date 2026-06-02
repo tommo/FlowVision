@@ -263,7 +263,9 @@ class CustomOutlineView: NSOutlineView, NSMenuDelegate {
     @objc func actOpenInNewTab() {
         guard let url=URL(string: curRightClickedPath) else{return}
         if let appDelegate=NSApplication.shared.delegate as? AppDelegate {
-            _ = appDelegate.createNewWindow(url.absoluteString)
+            // 按住 Cmd 点击菜单项时在后台打开
+            // Hold Cmd when clicking the menu item to open in background
+            _ = appDelegate.createNewWindow(url.absoluteString, openInBackground: NSEvent.modifierFlags.contains(.command))
         }
     }
 

@@ -2069,7 +2069,9 @@ class LargeImageView: NSView {
     
     @objc func actOpenInNewTab() {
         if let appDelegate=NSApplication.shared.delegate as? AppDelegate {
-            if let windowController = appDelegate.createNewWindow(file.path, isLaunchFromFile: true) {
+            // 按住 Cmd 点击菜单项时在后台打开
+            // Hold Cmd when clicking the menu item to open in background
+            if let windowController = appDelegate.createNewWindow(file.path, isLaunchFromFile: true, openInBackground: NSEvent.modifierFlags.contains(.command)) {
                 appDelegate.openImageInTargetWindow(file.path, windowController: windowController)
             }
         }
