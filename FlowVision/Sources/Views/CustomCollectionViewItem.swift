@@ -1098,11 +1098,8 @@ class CustomCollectionViewItem: NSCollectionViewItem {
                     actionItemOpen.keyEquivalentModifierMask = []
                 }
                 
-                if (file.type == .folder || file.type == .image || (file.type == .video && globalVar.useInternalPlayer && globalVar.HandledNativeSupportedVideoExtensions.contains(file.ext.lowercased()))) {
-                    var titleTmp = NSLocalizedString("Open in New Tab", comment: "在新标签页中打开")
-                    if selectedCount > 1 {
-                        titleTmp = NSLocalizedString("open-in-new-tab-this", comment: "在新标签页中打开此项")
-                    }
+                if (true || selectedCount > 1 || file.type == .folder || file.type == .image || (file.type == .video && globalVar.useInternalPlayer && globalVar.HandledNativeSupportedVideoExtensions.contains(file.ext.lowercased()))) {
+                    let titleTmp = NSLocalizedString("Open in New Tab", comment: "在新标签页中打开")
                     let actionItemOpenInNewTab = menu.addItem(withTitle: titleTmp, action: #selector(actOpenInNewTab), keyEquivalent: "")
                     if isWindowNumMax() {
                         actionItemOpenInNewTab.isEnabled=false
@@ -1112,11 +1109,11 @@ class CustomCollectionViewItem: NSCollectionViewItem {
                 }
 
                 let isRecursive = getViewController(collectionView!)?.publicVar.isRecursiveMode ?? false
-                let canShowParent = selectedCount == 1 && (isRecursive || getViewController(collectionView!)!.fileDB.curFolder.hasPrefix("file:///VirtualFinderTagsFolder"))
-                if canShowParent, let url = URL(string: file.path) {
+                let canShowInOriginalFolder = selectedCount == 1 && (file.isAlias || isRecursive || isVirtualFinderTagsFolder)
+                if canShowInOriginalFolder, let url = URL(string: file.path) {
                     let parentURL = url.deletingLastPathComponent()
                     if !parentURL.path.isEmpty && parentURL.absoluteString != url.absoluteString {
-                        let actionItemShowParent = menu.addItem(withTitle: NSLocalizedString("Show in Original Folder", comment: "在原文件夹中显示"), action: #selector(actShowParentInNewTab), keyEquivalent: "")
+                        let actionItemShowParent = menu.addItem(withTitle: NSLocalizedString("Show in Original Folder", comment: "在原文件夹中显示"), action: #selector(actShowInOriginalFolder), keyEquivalent: "")
                         if isWindowNumMax() {
                             actionItemShowParent.isEnabled = false
                         } else {
@@ -1279,21 +1276,53 @@ class CustomCollectionViewItem: NSCollectionViewItem {
     }
     
     @objc func actOpenInNewTab() {
-        if let appDelegate=NSApplication.shared.delegate as? AppDelegate {
-            if file.type == .folder {
-                _ = appDelegate.createNewWindow(file.path)
-            }else if file.type == .image || (file.type == .video && globalVar.useInternalPlayer && globalVar.HandledNativeSupportedVideoExtensions.contains(file.ext.lowercased())){
-                if let windowController = appDelegate.createNewWindow(file.path, isLaunchFromFile: true) {
-                    appDelegate.openImageInTargetWindow(file.path, windowController: windowController)
+        guard let urls = getViewController(collectionView!)?.publicVar.selectedUrls() else { return }
+        guard let appDelegate = NSApplication.shared.delegate as? AppDelegate else { return }
+        for url in urls {
+            let resolvedUrl: URL
+            if let values = try? url.resourceValues(forKeys: [.isAliasFileKey, .isSymbolicLinkKey]),
+               values.isAliasFile == true,
+               let resolved = try? URL(resolvingAliasFileAt: url) {
+                resolvedUrl = resolved
+            } else {
+                resolvedUrl = url
+            }
+            let path = resolvedUrl.absoluteString
+            let ext = resolvedUrl.pathExtension.lowercased()
+            let isDir = (try? resolvedUrl.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
+            if isDir {
+                _ = appDelegate.createNewWindow(path)
+            } else if globalVar.HandledImageAndRawExtensions.contains(ext) ||
+                      (globalVar.useInternalPlayer && globalVar.HandledNativeSupportedVideoExtensions.contains(ext)) {
+                if let windowController = appDelegate.createNewWindow(path, isLaunchFromFile: true) {
+                    appDelegate.openImageInTargetWindow(path, windowController: windowController)
                 }
-            }else{
+            } else {
                 actOpen()
             }
         }
     }
 
-    @objc func actShowParentInNewTab() {
-        guard let url = URL(string: file.path) else { return }
+    @objc func actShowInOriginalFolder() {
+        guard var url = URL(string: file.path) else { return }
+        guard let collectionView = collectionView else { return }
+        guard let viewController = getViewController(collectionView) else { return }
+        
+        let isRecursive = viewController.publicVar.isRecursiveMode
+        let isVirtualFinderTagsFolder = viewController.fileDB.curFolder.hasPrefix("file:///VirtualFinderTagsFolder")
+
+        if !(isRecursive || isVirtualFinderTagsFolder) {
+            let resolvedUrl: URL
+            if let values = try? url.resourceValues(forKeys: [.isAliasFileKey, .isSymbolicLinkKey]),
+               values.isAliasFile == true,
+               let resolved = try? URL(resolvingAliasFileAt: url) {
+                resolvedUrl = resolved
+            } else {
+                resolvedUrl = url
+            }
+            url = resolvedUrl
+        }
+
         let parentURL = url.deletingLastPathComponent()
         guard !parentURL.path.isEmpty, parentURL.absoluteString != url.absoluteString else { return }
         var parentPath = parentURL.absoluteString
@@ -1301,7 +1330,7 @@ class CustomCollectionViewItem: NSCollectionViewItem {
             parentPath += "/"
         }
         if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
-            _ = appDelegate.createNewWindow(parentPath)
+            _ = appDelegate.createNewWindow(parentPath, urlsToSelect: [url])
         }
     }
 

@@ -292,7 +292,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
         return true
     }
     
-    func createNewWindow(_ path: String? = nil, useCreateWindowShowDelay: Bool = false, isLaunchFromFile: Bool = false) -> WindowController? {
+    func createNewWindow(_ path: String? = nil, useCreateWindowShowDelay: Bool = false, isLaunchFromFile: Bool = false, urlsToSelect: [URL]? = nil) -> WindowController? {
         log("Start createNewWindow")
         // Start createNewWindow
         if isWindowNumMax() {
@@ -361,6 +361,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
                 viewController.fileDB.curFolder=openFolder
                 viewController.fileDB.unlock()
             }
+            if let urlsToSelect = urlsToSelect {
+                viewController.publicVar.filesForLocateAfterChange = urlsToSelect.map { $0.absoluteString }
+                viewController.publicVar.filesForLocateAfterChangeTime = .now()
+            }
             DispatchQueue.main.async {
                 viewController.afterFinishLoad(openFolder)
             }
@@ -382,30 +386,28 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
         for filePath in files {
             log(filePath)
         }
-
-        var path = files[0]
         
-        if path == "." {
-            path = FileManager.default.currentDirectoryPath
-        }
-        
-        var file = getFileSchemeAbsPath(path)
-        if let url=URL(string: file){
-            NSDocumentController.shared.noteNewRecentDocumentURL(url)
-        }
-        
-        var isDirectoryObj: ObjCBool = false
-        FileManager.default.fileExists(atPath: path, isDirectory: &isDirectoryObj)
-        let isDirectory=isDirectoryObj.boolValue
-        
-        if isDirectory && file.last != "/" {file=file+"/"}
-        
-        // 新窗口打开（暂时统一新窗口打开）
-        // Open in new window (temporarily unified to open in new window)
-        if true || windowControllers.count == 0 {
+        for path in files {
+            var path = path
+            if path == "." {
+                path = FileManager.default.currentDirectoryPath
+            }
+            
+            var file = getFileSchemeAbsPath(path)
+            if let url=URL(string: file){
+                NSDocumentController.shared.noteNewRecentDocumentURL(url)
+            }
+            
+            var isDirectoryObj: ObjCBool = false
+            FileManager.default.fileExists(atPath: path, isDirectory: &isDirectoryObj)
+            let isDirectory=isDirectoryObj.boolValue
+            
+            if isDirectory && file.last != "/" {file=file+"/"}
+            
+            // 新窗口打开
+            // Open in new window
             if isDirectory{
                 _ = createNewWindow(file)
-                return
             }else{
                 var useCreateWindowShowDelay = false
                 if windowControllers.count == 0 || globalVar.autoHideToolbar {
@@ -417,27 +419,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
                 }
                 if let targetWindowController = createNewWindow(file, useCreateWindowShowDelay: useCreateWindowShowDelay, isLaunchFromFile: true) {
                     openImageInTargetWindow(file, windowController: targetWindowController)
-                }
-                return
-            }
-        }
-        
-        // 本窗口打开
-        // Open in current window
-        if isDirectory{
-            DispatchQueue.main.async {
-                if let mainViewController = NSApplication.shared.mainWindow?.windowController?.contentViewController as? ViewController {
-                    mainViewController.handleDraggedFiles([URL(string: file)!])
-                }else if let viewController = self.windowControllers.first?.contentViewController as? ViewController {
-                    viewController.handleDraggedFiles([URL(string: file)!])
-                }
-            }
-        }else{
-            DispatchQueue.main.async {
-                if let mainWindowController = NSApplication.shared.mainWindow?.windowController {
-                    self.openImageInTargetWindow(file, windowController: mainWindowController)
-                }else if let windowController = self.windowControllers.first {
-                    self.openImageInTargetWindow(file, windowController: windowController)
                 }
             }
         }
