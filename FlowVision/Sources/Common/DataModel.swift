@@ -503,6 +503,8 @@ class FileModel {
     var ext: String = ""
     var type: FileType = .notSet
     var isAlias: Bool = false
+    var aliasActualExt: String = ""
+    var aliasActualType: FileType = .notSet
     
     var originalSize: NSSize?
     var largeSize: NSSize?

@@ -794,9 +794,11 @@ class CustomCollectionViewItem: NSCollectionViewItem {
         
         // 边框为0时不显示底色
         // Don't show background color when border thickness is 0
+        let actualType = file.isAlias ? file.aliasActualType : file.type
+        let actualExt = file.isAlias ? file.aliasActualExt : file.ext
         if style.ThumbnailBorderThickness == 0 {
             view.layer?.backgroundColor = hexToNSColor(alpha: 0).cgColor
-            if file.getThumbFailed || !(file.type == .image || file.type == .video || file.ext == "pdf") {
+            if file.getThumbFailed || !(actualType == .image || actualType == .video || actualExt == "pdf") {
                 imageViewObj.layer?.backgroundColor = hexToNSColor(alpha: 0).cgColor
             }
         }
@@ -878,9 +880,11 @@ class CustomCollectionViewItem: NSCollectionViewItem {
         
         // 边框为0时不显示底色
         // Don't show background color when border thickness is 0
+        let actualType = file.isAlias ? file.aliasActualType : file.type
+        let actualExt = file.isAlias ? file.aliasActualExt : file.ext
         if style.ThumbnailBorderThickness == 0 {
             view.layer?.backgroundColor = hexToNSColor(alpha: 0).cgColor
-            if file.getThumbFailed || !(file.type == .image || file.type == .video || file.ext == "pdf") {
+            if file.getThumbFailed || !(actualType == .image || actualType == .video || actualExt == "pdf") {
                 imageViewObj.layer?.backgroundColor = hexToNSColor(alpha: 0).cgColor
             }
         }
@@ -941,7 +945,9 @@ class CustomCollectionViewItem: NSCollectionViewItem {
         
         // 阴影效果
         // Shadow effect
-        if (style.ThumbnailShowShadow || style.layoutType == .grid) && (file.type == .image || file.type == .video || file.ext == "pdf") && !file.getThumbFailed {
+        let actualType = file.isAlias ? file.aliasActualType : file.type
+        let actualExt = file.isAlias ? file.aliasActualExt : file.ext
+        if (style.ThumbnailShowShadow || style.layoutType == .grid) && (actualType == .image || actualType == .video || actualExt == "pdf") && !file.getThumbFailed {
             view.layer?.shadowColor = NSColor.black.withAlphaComponent(0.4).cgColor
             view.layer?.shadowOffset = CGSize(width: 1.3, height: -1.3)
             view.layer?.shadowRadius = 2.5

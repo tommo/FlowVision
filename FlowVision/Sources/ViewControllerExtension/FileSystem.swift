@@ -676,6 +676,19 @@ extension ViewController {
                     ele.1.ext=URL(string: ele.1.path)!.pathExtension.lowercased()
                     if ele.1.isAlias {
                         ele.1.type = .other
+                        if let resolved = try? URL(resolvingAliasFileAt: URL(string: ele.1.path)!) {
+                            ele.1.aliasActualExt = resolved.pathExtension.lowercased()
+                            if globalVar.HandledImageAndRawExtensions.contains(ele.1.aliasActualExt) {
+                                ele.1.aliasActualType = .image
+                            } else if globalVar.HandledVideoExtensions.contains(ele.1.aliasActualExt) {
+                                ele.1.aliasActualType = .video
+                            } else {
+                                ele.1.aliasActualType = .other
+                            }
+                        } else {
+                            ele.1.aliasActualType = .other
+                            ele.1.aliasActualExt = ""
+                        }
                     } else if globalVar.HandledImageAndRawExtensions.contains(ele.1.ext) {
                         ele.1.type = .image
                         ele.1.idInImage = idInImage
@@ -691,6 +704,7 @@ extension ViewController {
                     }
                 }else{
                     ele.1.type = .folder
+                    ele.1.aliasActualType = .folder
                 }
                 ele.1.id = id
                 id += 1
