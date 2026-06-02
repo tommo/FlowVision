@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24412" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24506" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24412"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24506"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -45,7 +45,7 @@
                         <gridCell row="H2Q-9U-IwK" column="X7r-A5-zjQ" id="ab2-Gv-aBg">
                             <textField key="contentView" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="P9u-66-3t9">
                                 <rect key="frame" x="60" y="635" width="66" height="16"/>
-                                <textFieldCell key="cell" lineBreakMode="clipping" title="Enter Key:" id="dKs-LJ-cIZ">
+                                <textFieldCell key="cell" alignment="right" title="Enter Key:" id="dKs-LJ-cIZ">
                                     <font key="font" usesAppearanceFont="YES"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -90,7 +90,7 @@
                         <gridCell row="tyX-xi-JUH" column="X7r-A5-zjQ" id="zcw-4m-fRz">
                             <textField key="contentView" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="fwn-dW-cfy">
                                 <rect key="frame" x="30" y="576" width="96" height="16"/>
-                                <textFieldCell key="cell" lineBreakMode="clipping" title="Image Viewing:" id="p6V-rJ-gwR">
+                                <textFieldCell key="cell" alignment="right" title="Image Viewing:" id="p6V-rJ-gwR">
                                     <font key="font" usesAppearanceFont="YES"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -120,8 +120,8 @@ Long press the right mouse button to fit the image to the view.</string>
                         <gridCell row="1ju-7T-mfc" column="oNd-Vu-470" headOfMergedCell="Kui-HA-yYz" id="QUv-cn-RhQ"/>
                         <gridCell row="Z7f-hg-6RQ" column="X7r-A5-zjQ" id="vVd-Xc-v9G">
                             <textField key="contentView" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0yA-K6-8F3">
-                                <rect key="frame" x="-2" y="428" width="128" height="16"/>
-                                <textFieldCell key="cell" lineBreakMode="clipping" title="Right-Click Gestures:" id="qK4-Oc-vMt">
+                                <rect key="frame" x="-2" y="412" width="128" height="32"/>
+                                <textFieldCell key="cell" alignment="right" title="Right-Click Gestures:" id="qK4-Oc-vMt">
                                     <font key="font" usesAppearanceFont="YES"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -152,7 +152,7 @@ Down-Right: Close the tab/window.</string>
                         <gridCell row="Msn-zB-CUY" column="X7r-A5-zjQ" id="5zK-5Q-b8r">
                             <textField key="contentView" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="C0B-Ff-xTr">
                                 <rect key="frame" x="-2" y="280" width="128" height="16"/>
-                                <textFieldCell key="cell" lineBreakMode="clipping" title="Keyboard Shortcuts:" id="diV-0n-cUs">
+                                <textFieldCell key="cell" alignment="right" title="Keyboard Shortcuts:" id="diV-0n-cUs">
                                     <font key="font" usesAppearanceFont="YES"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -180,7 +180,7 @@ In image view: W/S zoom in/zoom out, Z zoom to 100%, X zoom to fit, A/D previous
                         <gridCell row="J4a-Ij-pJy" column="X7r-A5-zjQ" yPlacement="top" id="QSG-oT-Q5y">
                             <textField key="contentView" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="CH8-Nh-0Jw">
                                 <rect key="frame" x="37" y="188" width="89" height="16"/>
-                                <textFieldCell key="cell" lineBreakMode="clipping" title="Quick Search:" id="bjd-tP-l6n">
+                                <textFieldCell key="cell" alignment="right" title="Quick Search:" id="bjd-tP-l6n">
                                     <font key="font" usesAppearanceFont="YES"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -207,7 +207,7 @@ In image view: W/S zoom in/zoom out, Z zoom to 100%, X zoom to fit, A/D previous
                         <gridCell row="ZWa-1o-EWV" column="X7r-A5-zjQ" id="y67-ck-t68">
                             <textField key="contentView" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="iwe-uk-5rL">
                                 <rect key="frame" x="16" y="82" width="110" height="16"/>
-                                <textFieldCell key="cell" lineBreakMode="clipping" title="Profile Switching:" id="VtW-9m-Sj8">
+                                <textFieldCell key="cell" alignment="right" title="Profile Switching:" id="VtW-9m-Sj8">
                                     <font key="font" usesAppearanceFont="YES"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>

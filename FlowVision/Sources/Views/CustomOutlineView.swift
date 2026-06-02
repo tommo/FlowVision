@@ -124,13 +124,13 @@ class CustomOutlineView: NSOutlineView, NSMenuDelegate {
                 let sortSubmenu = NSMenu()
                 let sortTypes: [(SortType, String)] = [
                     (.pathA, NSLocalizedString("sort-pathA", comment: "文件名")),
-                    (.pathZ, NSLocalizedString("sort-pathZ", comment: "文件名(倒序)")),
+                    (.pathZ, NSLocalizedString("sort-pathZ", comment: "文件名(降序)")),
                     (.createDateA, NSLocalizedString("sort-createDateA", comment: "创建日期")),
-                    (.createDateZ, NSLocalizedString("sort-createDateZ", comment: "创建日期(倒序)")),
+                    (.createDateZ, NSLocalizedString("sort-createDateZ", comment: "创建日期(降序)")),
                     (.modDateA, NSLocalizedString("sort-modDateA", comment: "修改日期")),
-                    (.modDateZ, NSLocalizedString("sort-modDateZ", comment: "修改日期(倒序)")),
+                    (.modDateZ, NSLocalizedString("sort-modDateZ", comment: "修改日期(降序)")),
                     (.addDateA, NSLocalizedString("sort-addDateA", comment: "添加日期")),
-                    (.addDateZ, NSLocalizedString("sort-addDateZ", comment: "添加日期(倒序)"))
+                    (.addDateZ, NSLocalizedString("sort-addDateZ", comment: "添加日期(降序)"))
                 ]
                 
                 let currentDirTreeSortType = SortType(rawValue: Int(getViewController(self)!.publicVar.profile.getValue(forKey: "dirTreeSortType")) ?? 0)

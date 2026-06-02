@@ -1085,29 +1085,29 @@ extension WindowController: NSToolbarDelegate {
         ]
         let sortTypes: [(SortType, String)] = [
             (.pathA, NSLocalizedString("sort-pathA", comment: "文件名")),
-            (.pathZ, NSLocalizedString("sort-pathZ", comment: "文件名(倒序)")),
+            (.pathZ, NSLocalizedString("sort-pathZ", comment: "文件名(降序)")),
             (.sizeA, NSLocalizedString("sort-sizeA", comment: "文件大小")),
-            (.sizeZ, NSLocalizedString("sort-sizeZ", comment: "文件大小(倒序)")),
+            (.sizeZ, NSLocalizedString("sort-sizeZ", comment: "文件大小(降序)")),
             (.extA, NSLocalizedString("sort-extA", comment: "文件类型")),
-            (.extZ, NSLocalizedString("sort-extZ", comment: "文件类型(倒序)")),
+            (.extZ, NSLocalizedString("sort-extZ", comment: "文件类型(降序)")),
             (.createDateA, NSLocalizedString("sort-createDateA", comment: "创建日期")),
-            (.createDateZ, NSLocalizedString("sort-createDateZ", comment: "创建日期(倒序)")),
+            (.createDateZ, NSLocalizedString("sort-createDateZ", comment: "创建日期(降序)")),
             (.modDateA, NSLocalizedString("sort-modDateA", comment: "修改日期")),
-            (.modDateZ, NSLocalizedString("sort-modDateZ", comment: "修改日期(倒序)")),
+            (.modDateZ, NSLocalizedString("sort-modDateZ", comment: "修改日期(降序)")),
             (.addDateA, NSLocalizedString("sort-addDateA", comment: "添加日期")),
-            (.addDateZ, NSLocalizedString("sort-addDateZ", comment: "添加日期(倒序)")),
+            (.addDateZ, NSLocalizedString("sort-addDateZ", comment: "添加日期(降序)")),
             (.tagA, NSLocalizedString("sort-tagA", comment: "Finder标签")),
-            (.tagZ, NSLocalizedString("sort-tagZ", comment: "Finder标签(倒序)")),
+            (.tagZ, NSLocalizedString("sort-tagZ", comment: "Finder标签(降序)")),
             (.random, NSLocalizedString("sort-random", comment: "随机"))
         ]
         
         let exifSortTypes: [(SortType, String)] = [
             (.exifDateA, NSLocalizedString("sort-exifDateA", comment: "Exif日期")),
-            (.exifDateZ, NSLocalizedString("sort-exifDateZ", comment: "Exif日期(倒序)")),
+            (.exifDateZ, NSLocalizedString("sort-exifDateZ", comment: "Exif日期(降序)")),
             (.exifPixelA, NSLocalizedString("sort-exifPixelA", comment: "Exif像素数")),
-            (.exifPixelZ, NSLocalizedString("sort-exifPixelZ", comment: "Exif像素数(倒序)")),
+            (.exifPixelZ, NSLocalizedString("sort-exifPixelZ", comment: "Exif像素数(降序)")),
             (.ratingA, NSLocalizedString("sort-ratingA", comment: "XMP评级")),
-            (.ratingZ, NSLocalizedString("sort-ratingZ", comment: "XMP评级(倒序)"))
+            (.ratingZ, NSLocalizedString("sort-ratingZ", comment: "XMP评级(降序)"))
         ]
         
         let menu = NSMenu()

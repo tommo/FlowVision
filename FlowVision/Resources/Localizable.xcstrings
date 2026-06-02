@@ -35205,7 +35205,7 @@
       }
     },
     "sort-addDateZ" : {
-      "comment" : "添加日期(倒序)",
+      "comment" : "添加日期(降序)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -35300,7 +35300,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "添加日期(降序)"
+            "value" : "添加日期 (降序)"
           }
         },
         "zh-Hant" : {
@@ -35419,7 +35419,7 @@
       }
     },
     "sort-createDateZ" : {
-      "comment" : "创建日期(倒序)",
+      "comment" : "创建日期(降序)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -35514,7 +35514,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "创建日期(降序)"
+            "value" : "创建日期 (降序)"
           }
         },
         "zh-Hant" : {
@@ -35847,7 +35847,7 @@
       }
     },
     "sort-exifDateZ" : {
-      "comment" : "Exif日期(倒序)",
+      "comment" : "Exif日期(降序)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -35942,13 +35942,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Exif日期(降序)"
+            "value" : "Exif日期 (降序)"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Exif日期(降序)"
+            "value" : "Exif日期 (降序)"
           }
         }
       }
@@ -36061,7 +36061,7 @@
       }
     },
     "sort-exifPixelZ" : {
-      "comment" : "Exif像素数(倒序)",
+      "comment" : "Exif像素数(降序)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -36156,13 +36156,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Exif像素数(降序)"
+            "value" : "Exif像素数 (降序)"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Exif像素大小(降序)"
+            "value" : "Exif像素大小 (降序)"
           }
         }
       }
@@ -36275,7 +36275,7 @@
       }
     },
     "sort-extZ" : {
-      "comment" : "文件类型(倒序)",
+      "comment" : "文件类型(降序)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -36370,7 +36370,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "文件类型(降序)"
+            "value" : "文件类型 (降序)"
           }
         },
         "zh-Hant" : {
@@ -37452,7 +37452,7 @@
       }
     },
     "sort-modDateZ" : {
-      "comment" : "修改日期(倒序)",
+      "comment" : "修改日期(降序)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -37547,7 +37547,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "修改日期(降序)"
+            "value" : "修改日期 (降序)"
           }
         },
         "zh-Hant" : {
@@ -37666,7 +37666,7 @@
       }
     },
     "sort-pathZ" : {
-      "comment" : "文件名(倒序)",
+      "comment" : "文件名(降序)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -37761,7 +37761,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "文件名(降序)"
+            "value" : "文件名 (降序)"
           }
         },
         "zh-Hant" : {
@@ -37987,7 +37987,7 @@
       }
     },
     "sort-ratingZ" : {
-      "comment" : "XMP评级(倒序)",
+      "comment" : "XMP评级(降序)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -38082,13 +38082,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "XMP评级(倒序)"
+            "value" : "XMP评级 (降序)"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "XMP評級(倒序)"
+            "value" : "XMP評級 (降序)"
           }
         }
       }
@@ -38308,7 +38308,7 @@
       }
     },
     "sort-sizeZ" : {
-      "comment" : "文件大小(倒序)",
+      "comment" : "文件大小(降序)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -38403,7 +38403,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "文件大小(降序)"
+            "value" : "文件大小 (降序)"
           }
         },
         "zh-Hant" : {
@@ -38522,7 +38522,7 @@
       }
     },
     "sort-tagZ" : {
-      "comment" : "Finder标签(倒序)",
+      "comment" : "Finder标签(降序)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -38617,13 +38617,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Finder标签(倒序)"
+            "value" : "Finder标签 (降序)"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Finder標籤(降序)"
+            "value" : "Finder標籤 (降序)"
           }
         }
       }
