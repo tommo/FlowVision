@@ -63,7 +63,7 @@ extension CustomOutlineViewManager: NSOutlineViewDelegate {
     func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
         guard let treeNode = item as? TreeNode else { return nil }
         let view = outlineView.makeView(withIdentifier: NSUserInterfaceItemIdentifier("DataCell"), owner: self) as! CustomTableCellView
-        view.textField?.stringValue = treeNode.name
+        view.textField?.stringValue = treeNode.localizedName ?? treeNode.name
         
         if treeNode.fullPath.contains("FlowVisionTitleFolder") {
             view.imageView?.image = NSImage(named: "AppIcon")
@@ -189,7 +189,7 @@ extension CustomOutlineViewManager: NSOutlineViewDelegate {
                 if let item = outlineView.item(atRow: i) as? TreeNode {
                     // 计算这个单元格内容的宽度
                     // Calculate width of this cell content
-                    let content = item.name
+                    let content = item.localizedName ?? item.name
                     let attributes = [NSAttributedString.Key.font: NSFont.systemFont(ofSize: 13)]
                     let size = (content as NSString).size(withAttributes: attributes)
                     

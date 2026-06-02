@@ -609,6 +609,7 @@ func getMapKeysFile (_ theMap : Map<SortKeyFile,FileModel>) -> [(SortKeyFile,Fil
 
 class TreeNode: NSObject {
     var name: String
+    var localizedName: String?
     var fullPath: String
     var children: [TreeNode]?
     var hasChild: Bool = false
@@ -756,57 +757,118 @@ class TreeViewModel {
             
             // 排序
             // Sort
+            // 预取本地化名缓存，避免排序时重复调用 resourceValues（每项只取一次）
+            // Pre-fetch localized name cache to avoid repeated resourceValues calls during sorting
+            var localizedNameCache: [URL: String] = [:]
+            for url in subFolders {
+                if let locName = try? url.resourceValues(forKeys: [.localizedNameKey]).localizedName {
+                    localizedNameCache[url] = locName
+                }
+            }
+
             // 卷列表保持字母序
             // Volume list maintains alphabetical order
             if folderURL.path.hasPrefix("/VirtualFinderTagsFolder") {
                 // 不排序，保持 FinderTag.all 的顺序
                 // No sorting, keep FinderTag.all order
             } else if folderURL.path == "root" {
-                subFolders.sort { $0.lastPathComponent.lowercased().localizedStandardCompare($1.lastPathComponent.lowercased()) == .orderedAscending }
+                subFolders.sort {
+                    let a = localizedNameCache[$0] ?? $0.lastPathComponent
+                    let b = localizedNameCache[$1] ?? $1.lastPathComponent
+                    if $0.path == "/" {
+                        return true
+                    }
+                    if $1.path == "/" {
+                        return false
+                    }
+                    return a.localizedStandardCompare(b) == .orderedAscending
+                }
             }else{
                 let sortType = SortType(rawValue: Int(viewController.publicVar.profile.getValue(forKey: "dirTreeSortType")) ?? 0)
                 if sortType == .pathA {
-                    subFolders.sort { $0.lastPathComponent.lowercased().localizedStandardCompare($1.lastPathComponent.lowercased()) == .orderedAscending }
+                    subFolders.sort {
+                        let a = localizedNameCache[$0] ?? $0.lastPathComponent
+                        let b = localizedNameCache[$1] ?? $1.lastPathComponent
+                        return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                    }
                 } else if sortType == .pathZ {
-                    subFolders.sort { $0.lastPathComponent.lowercased().localizedStandardCompare($1.lastPathComponent.lowercased()) == .orderedDescending }
+                    subFolders.sort {
+                        let a = localizedNameCache[$0] ?? $0.lastPathComponent
+                        let b = localizedNameCache[$1] ?? $1.lastPathComponent
+                        return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedDescending
+                    }
                 } else if sortType == .createDateA {
-                    subFolders.sort { 
-                        let date1 = try? $0.resourceValues(forKeys: [.creationDateKey]).creationDate ?? Date.distantPast
-                        let date2 = try? $1.resourceValues(forKeys: [.creationDateKey]).creationDate ?? Date.distantPast
-                        return date1 ?? Date.distantPast < date2 ?? Date.distantPast
+                    subFolders.sort {
+                        let d1 = (try? $0.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? Date.distantPast
+                        let d2 = (try? $1.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? Date.distantPast
+                        if d1 == d2 {
+                            let a = localizedNameCache[$0] ?? $0.lastPathComponent
+                            let b = localizedNameCache[$1] ?? $1.lastPathComponent
+                            return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                        }
+                        return d1 < d2
                     }
                 } else if sortType == .createDateZ {
-                    subFolders.sort { 
-                        let date1 = try? $0.resourceValues(forKeys: [.creationDateKey]).creationDate ?? Date.distantPast
-                        let date2 = try? $1.resourceValues(forKeys: [.creationDateKey]).creationDate ?? Date.distantPast
-                        return date1 ?? Date.distantPast > date2 ?? Date.distantPast
+                    subFolders.sort {
+                        let d1 = (try? $0.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? Date.distantPast
+                        let d2 = (try? $1.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? Date.distantPast
+                        if d1 == d2 {
+                            let a = localizedNameCache[$0] ?? $0.lastPathComponent
+                            let b = localizedNameCache[$1] ?? $1.lastPathComponent
+                            return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                        }
+                        return d1 > d2
                     }
                 } else if sortType == .modDateA {
-                    subFolders.sort { 
-                        let date1 = try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate ?? Date.distantPast
-                        let date2 = try? $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate ?? Date.distantPast
-                        return date1 ?? Date.distantPast < date2 ?? Date.distantPast
+                    subFolders.sort {
+                        let d1 = (try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date.distantPast
+                        let d2 = (try? $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date.distantPast
+                        if d1 == d2 {
+                            let a = localizedNameCache[$0] ?? $0.lastPathComponent
+                            let b = localizedNameCache[$1] ?? $1.lastPathComponent
+                            return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                        }
+                        return d1 < d2
                     }
                 } else if sortType == .modDateZ {
-                    subFolders.sort { 
-                        let date1 = try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate ?? Date.distantPast
-                        let date2 = try? $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate ?? Date.distantPast
-                        return date1 ?? Date.distantPast > date2 ?? Date.distantPast
+                    subFolders.sort {
+                        let d1 = (try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date.distantPast
+                        let d2 = (try? $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date.distantPast
+                        if d1 == d2 {
+                            let a = localizedNameCache[$0] ?? $0.lastPathComponent
+                            let b = localizedNameCache[$1] ?? $1.lastPathComponent
+                            return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                        }
+                        return d1 > d2
                     }
                 } else if sortType == .addDateA {
-                    subFolders.sort { 
-                        let date1 = try? $0.resourceValues(forKeys: [.addedToDirectoryDateKey]).addedToDirectoryDate ?? Date.distantPast
-                        let date2 = try? $1.resourceValues(forKeys: [.addedToDirectoryDateKey]).addedToDirectoryDate ?? Date.distantPast
-                        return date1 ?? Date.distantPast < date2 ?? Date.distantPast
+                    subFolders.sort {
+                        let d1 = (try? $0.resourceValues(forKeys: [.addedToDirectoryDateKey]).addedToDirectoryDate) ?? Date.distantPast
+                        let d2 = (try? $1.resourceValues(forKeys: [.addedToDirectoryDateKey]).addedToDirectoryDate) ?? Date.distantPast
+                        if d1 == d2 {
+                            let a = localizedNameCache[$0] ?? $0.lastPathComponent
+                            let b = localizedNameCache[$1] ?? $1.lastPathComponent
+                            return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                        }
+                        return d1 < d2
                     }
                 } else if sortType == .addDateZ {
-                    subFolders.sort { 
-                        let date1 = try? $0.resourceValues(forKeys: [.addedToDirectoryDateKey]).addedToDirectoryDate ?? Date.distantPast
-                        let date2 = try? $1.resourceValues(forKeys: [.addedToDirectoryDateKey]).addedToDirectoryDate ?? Date.distantPast
-                        return date1 ?? Date.distantPast > date2 ?? Date.distantPast
+                    subFolders.sort {
+                        let d1 = (try? $0.resourceValues(forKeys: [.addedToDirectoryDateKey]).addedToDirectoryDate) ?? Date.distantPast
+                        let d2 = (try? $1.resourceValues(forKeys: [.addedToDirectoryDateKey]).addedToDirectoryDate) ?? Date.distantPast
+                        if d1 == d2 {
+                            let a = localizedNameCache[$0] ?? $0.lastPathComponent
+                            let b = localizedNameCache[$1] ?? $1.lastPathComponent
+                            return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                        }
+                        return d1 > d2
                     }
                 } else {
-                    subFolders.sort { $0.lastPathComponent.lowercased().localizedStandardCompare($1.lastPathComponent.lowercased()) == .orderedAscending }
+                    subFolders.sort {
+                        let a = localizedNameCache[$0] ?? $0.lastPathComponent
+                        let b = localizedNameCache[$1] ?? $1.lastPathComponent
+                        return a.lowercased().localizedStandardCompare(b.lowercased()) == .orderedAscending
+                    }
                 }
             }
 
@@ -824,10 +886,13 @@ class TreeViewModel {
             
             for subFolder in subFolders {
                 var name = subFolder.lastPathComponent
+                var localizedName = localizedNameCache[subFolder]
                 var fullPath = subFolder.absoluteString
-                if name == "/" { name = ROOT_NAME }
+                if name == "/" {
+                    localizedName = ROOT_NAME
+                }
                 if name == "PlaceholderForAutoHideToolbar" {
-                    name = "FlowVision"
+                    localizedName = "FlowVision"
                     fullPath = "file:///FlowVisionTitleFolder/"
                 }
                 if subFolder.absoluteString.hasPrefix("file:///VirtualFinderTagsFolder") {
@@ -838,6 +903,7 @@ class TreeViewModel {
                     }
                 }
                 var newNode = TreeNode(name: name, fullPath: fullPath)
+                newNode.localizedName = localizedName
                 newNode.isHidden = (try? subFolder.resourceValues(forKeys: [.isHiddenKey]))?.isHidden ?? false
                 
                 if oldChildren?.contains(where: { $0.name == newNode.name }) ?? false {
@@ -873,52 +939,7 @@ class TreeViewModel {
             return
         }
     }
-    
-    func buildTree(from paths: [String]) {
-        root = TreeNode(name: "Root")
-        
-        for path in paths {
-            let components = path.split(separator: "/").map(String.init)
-            var currentNode = root!
-            for (i,component) in components.enumerated() {
-                if currentNode.children?.contains(where: { $0.name == component.removingPercentEncoding! }) ?? false {
-                    currentNode = currentNode.children!.first(where: { $0.name == component.removingPercentEncoding! })!
-                } else {
-                    var curPath=""
-                    for k in 0...i {
-                        curPath+=components[k]+"/"
-                    }
-                    let newNode = TreeNode(name: component.removingPercentEncoding!, fullPath: curPath)
-                    if currentNode.children == nil {
-                        currentNode.children = [newNode]
-                    } else {
-                        currentNode.children?.append(newNode)
-                    }
-                    currentNode = newNode
-                }
-            }
-        }
-        
-        // return root
-    }
 
-    func findNode(withPath path: String) -> [TreeNode] {
-        if root==nil {return []}
-        let components = path.split(separator: "/").map(String.init)
-        var result=[TreeNode]()
-        var currentNode = root!
-        result.append(currentNode)
-        for component in components {
-            if let child = currentNode.children?.first(where: { $0.name == component.removingPercentEncoding! }) {
-                currentNode = child
-                result.append(currentNode)
-            } else {
-                return [] // Path does not exist
-            }
-        }
-        // log(currentNode.name)
-        return result
-    }
 }
 
 typealias TaskType = (String, DirModel, SortKeyFile, FileModel, Int, OtherTaskInfo)

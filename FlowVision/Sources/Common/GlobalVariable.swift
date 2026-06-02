@@ -19,7 +19,7 @@ let INFO_VIEW_DURATION = 0.3
 let OFFICIAL_WEBSITE = "https://flowvision.app"
 let FINDER_TAG_LEARN_MORE_URL = "https://flowvision.app/tag"
 
-let ROOT_NAME = getSystemVolumeName() ?? "Macintosh HD"
+var ROOT_NAME: String { return getSystemVolumeName() ?? "Macintosh HD" }
 
 let COLOR_COLLECTIONVIEW_BG_LIGHT = "#FFFFFF"
 let COLOR_COLLECTIONVIEW_BG_DARK = "#2D2D2D"
