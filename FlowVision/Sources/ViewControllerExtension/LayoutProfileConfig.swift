@@ -100,7 +100,7 @@ extension ViewController {
             }else if newStyle.layoutType == .grid {
                 switchToGridView(doNotRefresh: true)
             }else {
-                fatalError()
+                assertionFailure()
             }
         }
         // 边栏

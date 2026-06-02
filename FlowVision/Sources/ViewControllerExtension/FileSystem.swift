@@ -462,7 +462,7 @@ extension ViewController {
         if !skip {
             // 文件过滤
             // File filtering
-            fileDB.db[SortKeyDir(folderURL.absoluteString)]?.isFiltered = publicVar.isFilenameFilterOn
+            fileDB.db[SortKeyDir(folderURL.absoluteString)]!.isFiltered = publicVar.isFilenameFilterOn
             fileDB.db[SortKeyDir(folderURL.absoluteString)]!.folderCount=subFolders.count
             fileDB.db[SortKeyDir(folderURL.absoluteString)]!.fileCount=fileCount
             fileDB.db[SortKeyDir(folderURL.absoluteString)]!.imageCount=imageCount
@@ -801,7 +801,7 @@ extension ViewController {
             }else if publicVar.profile.layoutType == .justified {
                 collectionView.collectionViewLayout=publicVar.justifiedLayout
             }else {
-                fatalError()
+                assertionFailure()
             }
             publicVar.isNeedChangeLayoutType = false
         }

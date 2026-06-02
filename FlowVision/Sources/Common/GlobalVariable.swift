@@ -134,10 +134,10 @@ class GlobalVar{
 
     init(){
         HandledImageExtensions = ["jpg", "jpeg", "jpe", "jxl", "png", "gif", "bmp", "heif", "heic", "heics", "hif", "avif", "tif", "tiff", "webp", "jfif", "jp2", "ai", "psd", "ico", "cur", "icns", "svg", "tga", "pvr", "dds", "astc", "ktx", "ktx2", "exr", "hdr", "mpo", "pict", "pct", "sgi", "pbm", "pgm", "ppm", "pnm", "pam", "pfm"]
-        HandledRawExtensions = ["crw", "cr2", "cr3", "nef", "nrw", "arw", "arq", "sr2", "rw2", "orf", "srf", "raf", "pef", "dng", "raw", "rwl", "3fr", "fff", "iiq", "mos", "dcr", "kdc", "erf", "mrw", "srw"] + ["gpr", "x3f"]
+        HandledRawExtensions = ["raw", "dng", "crw", "cr2", "cr3", "dxo", "erf", "raf", "fff", "3fr", "dcr", "kdc", "k25", "mrw", "mos", "rwl", "nef", "nefx", "nrw", "orf", "rw2", "pef", "ptx", "iiq", "cap", "srw", "arw", "sr2", "srf", "axr"] + ["gpr", "x3f"]
         HandledImageAndRawExtensions = HandledImageExtensions + HandledRawExtensions
-        HandledNativeSupportedVideoExtensions = ["mp4", "mov", "m2ts", "mts", "ts", "mpeg", "mpg", "mpe", "m2v", "m4v", "vob"]
-        HandledNotNativeSupportedVideoExtensions = ["mkv", "avi", "flv", "f4v", "asf", "wmv", "rmvb", "rm", "webm", "divx", "xvid", "3gp", "3g2", "mjpeg"]
+        HandledNativeSupportedVideoExtensions = ["mp4", "mov", "m2ts", "mts", "ts", "mpeg", "mpg", "mpe", "m2v", "m4v", "vob", "3gp", "3g2"]
+        HandledNotNativeSupportedVideoExtensions = ["mkv", "avi", "flv", "f4v", "asf", "wmv", "rmvb", "rm", "webm", "divx", "xvid", "mjpeg", "hevc", "mxf", "ogv", "wtv"]
         HandledVideoExtensions = HandledNativeSupportedVideoExtensions + HandledNotNativeSupportedVideoExtensions
         // 不能为""，否则会把目录异常包含进来
         // Cannot be "", otherwise directories will be incorrectly included
@@ -180,7 +180,8 @@ func getAnyViewController() -> ViewController? {
     return nil
 }
 
-func getViewController(_ selfView: NSView) -> ViewController? {
+func getViewController(_ selfView: NSView?) -> ViewController? {
+    guard let selfView = selfView else { return nil }
     var responder: NSResponder? = selfView
     while responder != nil {
         if let viewController = responder as? ViewController {
@@ -192,7 +193,6 @@ func getViewController(_ selfView: NSView) -> ViewController? {
 }
 
 func getSystemVolumeName() -> String? {
-    let fileManager = FileManager.default
     
     // 获取根目录的URL
     // Get root directory URL

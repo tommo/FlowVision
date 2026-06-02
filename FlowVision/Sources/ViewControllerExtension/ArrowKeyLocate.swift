@@ -210,7 +210,7 @@ extension ViewController {
                 fileDB.unlock()
             }
         } else {
-            fatalError()
+            assertionFailure()
         }
         
         let currentCenter = centerPoint(of: currentItem)

@@ -151,7 +151,7 @@ extension ViewController {
     }
     
     func switchToDetailView(doNotRefresh: Bool = false){
-        fatalError()
+        assertionFailure()
         return
     }
     

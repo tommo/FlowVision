@@ -619,7 +619,7 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
         }else if publicVar.profile.layoutType == .grid {
             collectionView.collectionViewLayout = publicVar.gridLayout
         }else {
-            fatalError()
+            assertionFailure()
         }
         changeWaterfallLayoutNumberOfColumns()
         

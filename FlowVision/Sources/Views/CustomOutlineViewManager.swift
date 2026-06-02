@@ -122,6 +122,7 @@ extension CustomOutlineViewManager: NSOutlineViewDelegate {
     }
     
     func itemSelected(_ item: TreeNode) {
+        guard let viewController = getViewController(outlineView) else { return }
         if ifActWhenSelected {
             // log("Selected item: \(item.name)")
             // fileDB.lock()
@@ -129,8 +130,8 @@ extension CustomOutlineViewManager: NSOutlineViewDelegate {
             // fileDB.curFolder = item.fullPath
             // log(fileDB.curFolder)
             // fileDB.unlock()
-            // getViewController(self)!.publicVar.folderStepStack.insert(lastFolderPath, at: 0)
-            getViewController(outlineView!)?.switchDirByDirection(direction: .zero, dest: item.fullPath, doCollapse: false, expandLast: false, skip: false, stackDeep: 0)
+            // viewController.publicVar.folderStepStack.insert(lastFolderPath, at: 0)
+            viewController.switchDirByDirection(direction: .zero, dest: item.fullPath, doCollapse: false, expandLast: false, skip: false, stackDeep: 0)
         }
         
     }

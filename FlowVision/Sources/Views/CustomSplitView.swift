@@ -25,7 +25,8 @@ class CustomSplitView: NSSplitView {
     }
     
     override var dividerThickness: CGFloat {
-        if getViewController(self)!.publicVar.profile.isDirTreeHidden {
+        guard let viewController = getViewController(self) else { return 0 }
+        if viewController.publicVar.profile.isDirTreeHidden {
             return 0
         }else{
             if #available(macOS 26.0, *) {

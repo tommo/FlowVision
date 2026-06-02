@@ -14,14 +14,14 @@ class CustomOutlineView: NSOutlineView, NSMenuDelegate {
     override func becomeFirstResponder() -> Bool {
         let result = super.becomeFirstResponder()
         log("CustomOutlineView becomeFirstResponder")
-        getViewController(self)!.publicVar.isOutlineViewFirstResponder=true
+        getViewController(self)?.publicVar.isOutlineViewFirstResponder = true
         return result
     }
     
     override func resignFirstResponder() -> Bool {
         let result = super.resignFirstResponder()
         log("CustomOutlineView resignFirstResponder")
-        getViewController(self)!.publicVar.isOutlineViewFirstResponder=false
+        getViewController(self)?.publicVar.isOutlineViewFirstResponder = false
         return result
     }
     
@@ -33,6 +33,7 @@ class CustomOutlineView: NSOutlineView, NSMenuDelegate {
     }
     
     override func mouseDown(with event: NSEvent) {
+        guard let viewController = getViewController(self) else { return }
         let locationInWindow = event.locationInWindow
         let locationInOutlineView = convert(locationInWindow, from: nil)
         let clickedRow = row(at: locationInOutlineView)
@@ -43,7 +44,7 @@ class CustomOutlineView: NSOutlineView, NSMenuDelegate {
         // To solve the issue where after clicking directory tree, quickly right-clicking and left-clicking in blank area of CollectionView on the right causes abnormal response in directory tree
         // 且弹出重命名对话框时异常响应的问题
         // And abnormal response when rename dialog pops up
-        if clickedRow >= 0 && getViewController(self)!.publicVar.isKeyEventEnabled {
+        if clickedRow >= 0 && viewController.publicVar.isKeyEventEnabled {
             super.mouseDown(with: event)
         } else {
             // 如果点击区域无效，不执行默认的点击处理
@@ -69,6 +70,7 @@ class CustomOutlineView: NSOutlineView, NSMenuDelegate {
     }
     
     override func menu(for event: NSEvent) -> NSMenu? {
+        guard let viewController = getViewController(self) else { return nil }
         
         let locationInView = self.convert(event.locationInWindow, from: nil)
         let clickedRow = self.row(at: locationInView)
@@ -133,7 +135,7 @@ class CustomOutlineView: NSOutlineView, NSMenuDelegate {
                     (.addDateZ, NSLocalizedString("sort-addDateZ", comment: "添加日期(降序)"))
                 ]
                 
-                let currentDirTreeSortType = SortType(rawValue: Int(getViewController(self)!.publicVar.profile.getValue(forKey: "dirTreeSortType")) ?? 0)
+                let currentDirTreeSortType = SortType(rawValue: Int(viewController.publicVar.profile.getValue(forKey: "dirTreeSortType")) ?? 0)
                 
                 for (sortType, title) in sortTypes {
                     let item = sortSubmenu.addItem(withTitle: title, action: #selector(actSortByType(_:)), keyEquivalent: "")
