@@ -66,7 +66,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
         log("Start applicationWillFinishLaunching")
         // Start applicationWillFinishLaunching
         
-        func generateRoundedArray() -> [Int] {
+        func generateRoundedArrayDeprecated() -> [Int] {
             var result: [Int] = []
             var uniqueNumbers: Set<Int> = Set()
             var currentNumber: Double = 192
@@ -83,7 +83,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
             
             return result
         }
-        THUMB_SIZES=generateRoundedArray()
+        func generateThumbSizeArray() -> [Int] {
+            var result: [Int] = []
+            var currentNumber: Int = 128
+            
+            while currentNumber <= 10000 {
+                result.append(currentNumber)
+                currentNumber += 16
+            }
+            
+            return result
+        }
+        THUMB_SIZES=generateThumbSizeArray()
         // print(THUMB_SIZES)
         
         // UserDefaults.standard.set(nil, forKey: "AppleLanguages")

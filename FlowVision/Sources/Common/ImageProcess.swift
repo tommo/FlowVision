@@ -918,12 +918,12 @@ func getImageThumb(url: URL, size oriSize: NSSize? = nil, refSize: NSSize? = nil
         // Handle other thumbnails
         // 使用原图的格式
         // Use original image format
-        if ["gif", "svg"].contains(url.pathExtension.lowercased()) {
+        if ["gif", "svg", "ai"].contains(url.pathExtension.lowercased()) {
             return NSImage(contentsOf: url)
         }
         // 若指定了大小则特殊处理
         // Special handling if size is specified
-        if size != nil && "ai" != url.pathExtension.lowercased() {
+        if size != nil {
             if let resizedImage=getResizedImage(url: url, size: size!, isRawUseEmbeddedThumb: true){
                 return resizedImage
             }
@@ -1761,12 +1761,12 @@ func getImageInfo(url: URL, needMetadata: Bool) -> ImageInfo? {
         if let thumb = getImageThumb(url: url) {return ImageInfo(thumb.size)}
         return nil
     }else if globalVar.HandledImageAndRawExtensions.contains(url.pathExtension.lowercased()){
-        // SVG 是矢量格式，ImageIO 在旧系统上可能不支持
-        // SVG is a vector format; ImageIO may not support it on older systems
-        if url.pathExtension.lowercased() == "svg" {
+        // 矢量格式
+        // Vector format
+        if url.pathExtension.lowercased() == "svg" || url.pathExtension.lowercased() == "ai" {
             if let nsImage = NSImage(contentsOf: url), nsImage.size.width > 0, nsImage.size.height > 0 {
                 let imageInfo = ImageInfo(nsImage.size)
-                imageInfo.ext = "svg"
+                imageInfo.ext = url.pathExtension.lowercased()
                 return imageInfo
             }
             return nil
