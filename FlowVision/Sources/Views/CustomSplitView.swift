@@ -29,7 +29,7 @@ class CustomSplitView: NSSplitView {
         if viewController.publicVar.profile.isDirTreeHidden {
             return 0
         }else{
-            if #available(macOS 26.0, *) {
+            if #available(macOS 26.0, *), SDK_VERSION >= 26 {
                 return 0
             }else{
                 return 1

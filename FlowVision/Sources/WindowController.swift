@@ -388,7 +388,7 @@ extension WindowController: NSToolbarDelegate {
             }
         }
         
-        if #available(macOS 26.0, *) {
+        if #available(macOS 26.0, *), SDK_VERSION >= 26 {
             identifiers.append(.space)
         }else{
             identifiers.append(NSToolbarItem.Identifier("CustomSeparator"))
@@ -441,7 +441,7 @@ extension WindowController: NSToolbarDelegate {
         
         let itemCount = toolbar.items.filter { $0.itemIdentifier != .flexibleSpace }.count
         let spacingValue: CGFloat
-        if #available(macOS 26.0, *) {
+        if #available(macOS 26.0, *), SDK_VERSION >= 26 {
             spacingValue = 12
         } else {
             spacingValue = 6
