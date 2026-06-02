@@ -49,6 +49,10 @@ class WindowController: NSWindowController, NSWindowDelegate {
             }
         }
         
+        if globalVar.autoHideToolbar {
+            hideTitleBar()
+        }
+        
         if globalVar.portableMode && globalVar.startSpeedUpImageSizeCache != nil {
             if let viewController = contentViewController as? ViewController {
                 viewController.adjustWindowPortable(refSize: globalVar.startSpeedUpImageSizeCache, firstShowThumb: false, animate: false, justAdjustWindowFrame: true, isToCenter: true)
