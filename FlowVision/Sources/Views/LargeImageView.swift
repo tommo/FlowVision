@@ -1813,6 +1813,7 @@ class LargeImageView: NSView {
 
     override func rightMouseUp(with event: NSEvent) {
         guard let viewController = getViewController(self) else { return }
+        if !viewController.publicVar.isRightMouseDown { return }
         mouseUp(with: event)
         viewController.publicVar.isRightMouseDown = false
         
