@@ -211,7 +211,7 @@ Gw
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="uyl-h8-XO2"/>
-                                        <menuItem title="Find…" tag="1" keyEquivalent="f" id="xsi-wT-VTt">
+                                        <menuItem title="Find…" tag="1" keyEquivalent="" id="xsi-wT-VTt">
                                             <connections>
                                                 <action selector="showSearch:" target="Voe-Tx-rLC" id="Ug6-0o-NDH"/>
                                             </connections>
@@ -220,7 +220,7 @@ Gw
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <menu key="submenu" title="Find" id="1b7-l0-nxx">
                                                 <items>
-                                                    <menuItem title="Find…" tag="1" enabled="NO" keyEquivalent="f" id="Xz5-n4-O0W">
+                                                    <menuItem title="Find…" tag="1" enabled="NO" keyEquivalent="" id="Xz5-n4-O0W">
                                                         <connections>
                                                             <action selector="performFindPanelAction:" target="Ady-hI-5gd" id="cD7-Qs-BN4"/>
                                                         </connections>
@@ -863,7 +863,7 @@ Gw
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="fr4-Bv-rSB"/>
                                         <menuItem title="Enter Full Screen" keyEquivalent="f" id="4J7-dP-txa">
-                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                             <connections>
                                                 <action selector="toggleFullScreen:" target="Ady-hI-5gd" id="dU3-MA-1Rq"/>
                                             </connections>

@@ -99,6 +99,10 @@ class GlobalVar{
     var isEscKeyToGoBack = true
     var clickEdgeToSwitchImage = false
     var scrollMouseWheelToZoom = false
+    /// When true, large-image upsampling uses nearest-neighbor filtering.
+    var useNearestFilterWhenUpsampling = false
+    /// When true, large-image downsampling uses Lanczos filtering.
+    var useLanczosFilterWhenDownsampling = false
     var openLastFolder = true
     var homeFolder = "file:///"
     var keepFilterStateWhenSwitchFolder = false
@@ -111,7 +115,14 @@ class GlobalVar{
     // Rememberable settings variables
     var isFirstTimeUse = true
     var portableMode = false
+    /// When true (portable), size the window to 100% image pixels (capped to screen) instead of the max-ratio fit box.
     var portableImageUseActualSize = false
+    /// When true (portable), next/prev keeps window size and only changes the image (no re-size per file).
+    var portableKeepWindowWhenBrowsing = false
+    /// When true (portable open), center the window on screen.
+    var portableCenterOnOpen = true
+    /// Default zoom when opening / resetting large image size.
+    var initialZoomMode: InitialZoomMode = .fit
     var portableImageWidthRatio = 0.8
     var portableImageHeightRatio = 0.95
     var portableListWidthRatio = 0.7

@@ -11,19 +11,25 @@ import DiskArbitration
 extension ViewController {
     
     func switchToActualSizeForLargeImage(){
-        let defaults = UserDefaults.standard
-        defaults.set(false, forKey: "isLargeImageFitWindow")
-        publicVar.isLargeImageFitWindow=false
-        if publicVar.isInLargeView{
-            changeLargeImage(firstShowThumb: false, resetSize: true, triggeredByLongPress: false)
-        }
+        applyInitialZoomMode(.actual)
     }
     
     func switchToFitToWindowForLargeImage(){
-        let defaults = UserDefaults.standard
-        defaults.set(true, forKey: "isLargeImageFitWindow")
-        publicVar.isLargeImageFitWindow=true
-        if publicVar.isInLargeView{
+        applyInitialZoomMode(.fit)
+    }
+    
+    func switchToFillWindowForLargeImage(){
+        applyInitialZoomMode(.fill)
+    }
+    
+    func applyInitialZoomMode(_ mode: InitialZoomMode) {
+        globalVar.initialZoomMode = mode
+        UserDefaults.standard.set(mode.rawValue, forKey: "initialZoomMode")
+        // Keep legacy flag in sync for older code paths / menus that still check the bool.
+        let fitLike = (mode == .fit || mode == .fill)
+        publicVar.isLargeImageFitWindow = fitLike
+        UserDefaults.standard.set(fitLike, forKey: "isLargeImageFitWindow")
+        if publicVar.isInLargeView {
             changeLargeImage(firstShowThumb: false, resetSize: true, triggeredByLongPress: false)
         }
     }
@@ -247,12 +253,6 @@ extension ViewController {
                     // Pause auto-scroll
                     isAutoScrollPaused = true
                     
-                    // 显示首次使用提示
-                    // Show first-time use hint
-                    if globalVar.isFirstTimeUse{
-                        coreAreaView.showInfo(NSLocalizedString("first-time-use-prompt", comment: "首次使用提示..."), timeOut: .infinity, cannotBeCleard: false)
-                    }
-                    
                     currLargeImagePos=indexPath.item
                     initLargeImagePos=indexPath.item
 
@@ -387,7 +387,7 @@ extension ViewController {
             // Cancel OCR
             largeImageView.unSetOcr()
             
-            if globalVar.portableMode {
+            if globalVar.portableMode && !globalVar.portableKeepWindowWhenBrowsing {
                 fileDB.lock()
                 let refSize = fileDB.db[SortKeyDir(curFolder)]!.files.elementSafe(atOffset: nextLargeImagePos)?.1.originalSize
                 fileDB.unlock()
@@ -657,19 +657,13 @@ extension ViewController {
                 isHDR = false
             }
             
-            // 计算宽高
-            // Calculate width and height
-            if originalSize.height/originalSize.width*maxBounds.width > maxBounds.height {
-                largeSize=NSSize(width: originalSize.width/originalSize.height*maxBounds.height, height: maxBounds.height)
-            }else{
-                largeSize=NSSize(width: maxBounds.width, height: originalSize.height/originalSize.width*maxBounds.width)
-            }
-            
-            // 当原图实际大小小于视图大小时，按实际大小显示
-            // When original image actual size is smaller than view size, display at actual size
-            if !publicVar.isLargeImageFitWindow && originalSize.width<largeSize.width*scale {
-                largeSize=NSSize(width: originalSize.width/scale, height: originalSize.height/scale)
-            }
+            // Preload target size uses the same initial-zoom policy as changeLargeImage
+            largeSize = computeInitialLargeImageSize(
+                originalSize: originalSize,
+                maxBounds: maxBounds.size,
+                backingScale: scale,
+                mode: globalVar.initialZoomMode
+            )
             
             // 整数缩放
             // Integer scaling
@@ -820,19 +814,15 @@ extension ViewController {
                 originalSize=NSSize(width: originalSize.height, height: originalSize.width)
             }
             
-            // 由于首次打开图像时maxBounds可能为窗口大小，因此要按比例缩放到合适
-            // When first opening image, maxBounds may be window size, so scale proportionally to fit
-            if originalSize.height/originalSize.width*maxBounds.width > maxBounds.height {
-                largeSize=NSSize(width: originalSize.width/originalSize.height*maxBounds.height, height: maxBounds.height)
-            }else{
-                largeSize=NSSize(width: maxBounds.width, height: originalSize.height/originalSize.width*maxBounds.width)
-            }
-            
-            // 当原图实际大小小于视图大小时，按实际大小显示
-            // When original image actual size is smaller than view size, display at actual size
-            if !publicVar.isLargeImageFitWindow && originalSize.width<largeSize.width*scale && !triggeredByLongPress {
-                largeSize=NSSize(width: originalSize.width/scale, height: originalSize.height/scale)
-            }
+            // Initial zoom: fit / actual / fill (see InitialZoom.swift)
+            // Long-press window-fit paths force contain (fit) to avoid crop surprises while resizing chrome.
+            let zoomMode: InitialZoomMode = triggeredByLongPress ? .fit : globalVar.initialZoomMode
+            largeSize = computeInitialLargeImageSize(
+                originalSize: originalSize,
+                maxBounds: maxBounds.size,
+                backingScale: scale,
+                mode: zoomMode
+            )
             
             // 缩放锁定
             // Zoom lock
@@ -890,8 +880,11 @@ extension ViewController {
             
             // 若上次已经用了原图，这次还用原图，则不重新载入
             // If original image was used last time and is still used this time, do not reload
-            if lastDoNotGenResized && doNotGenResized && lastLargeImageRotate == rotate && lastUseHDR == isHDR {
+            // (skip this short-circuit when forceRefresh so resample option toggles re-apply)
+            if !forceRefresh && lastDoNotGenResized && doNotGenResized && lastLargeImageRotate == rotate && lastUseHDR == isHDR {
                 if file.type == .image {
+                    // Still refresh layer filter in case nearest upsample option changed
+                    largeImageView.imageView.applyResampleFilters()
                     return
                 }
             }

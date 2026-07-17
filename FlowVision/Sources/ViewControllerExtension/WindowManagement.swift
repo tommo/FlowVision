@@ -91,10 +91,16 @@ extension ViewController {
             if tmpSize == nil {tmpSize=NSSize(width: 400, height: 400)}
             tmpSize = NSSize(width: tmpSize!.width/scale, height: tmpSize!.height/scale)
             
-            if publicVar.isLargeImageFitWindow && !publicVar.isZoomLocked {
+            // Portable window sizing:
+            // - useActualSize / actual zoom → window hugs image pixels (capped to screen)
+            // - fit/fill → window sized to image within max screen ratio box
+            let useActualWindow = globalVar.portableImageUseActualSize
+                || globalVar.initialZoomMode == .actual
+                || publicVar.isZoomLocked
+            if useActualWindow {
+                adjustWindowTo(tmpSize!, firstShowThumb: firstShowThumb, animate: animate, justAdjustWindowFrame: justAdjustWindowFrame, isToCenter: isToCenter)
+            } else {
                 adjustWindowToImageRatio(refSize: tmpSize, firstShowThumb: firstShowThumb, animate: animate, justAdjustWindowFrame: justAdjustWindowFrame, isToCenter: isToCenter)
-            }else{
-                adjustWindowTo(tmpSize!, firstShowThumb: firstShowThumb, animate: false, justAdjustWindowFrame: justAdjustWindowFrame, isToCenter: isToCenter)
             }
         }else{
             adjustWindowToRatio(animate: animate, isToCenter: isToCenter)

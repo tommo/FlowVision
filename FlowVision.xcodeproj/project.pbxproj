@@ -24,6 +24,9 @@
 		F73865E02C37C06C00837FE4 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73865DF2C37C06C00837FE4 /* DataModel.swift */; };
 		F73865E22C37C0A300837FE4 /* Enum.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73865E12C37C0A300837FE4 /* Enum.swift */; };
 		F73865E42C37C11B00837FE4 /* ImageProcess.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73865E32C37C11B00837FE4 /* ImageProcess.swift */; };
+		F7A100012F6C0001000AF001 /* ResampleFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7A100002F6C0001000AF001 /* ResampleFilter.swift */; };
+		F7A100112F6C0101000AF011 /* InitialZoom.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7A100102F6C0101000AF010 /* InitialZoom.swift */; };
+		F7A100212F6C0201000AF021 /* ContentZoomGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7A100202F6C0201000AF020 /* ContentZoomGeometry.swift */; };
 		F73865E62C37C1AA00837FE4 /* DrawingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73865E52C37C1AA00837FE4 /* DrawingView.swift */; };
 		F73865E82C37C26C00837FE4 /* FFmpegKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73865E72C37C26C00837FE4 /* FFmpegKit.swift */; };
 		F74636372C4F43AE0086E920 /* AdvancedSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74636352C4F43AE0086E920 /* AdvancedSettingsViewController.swift */; };
@@ -135,6 +138,9 @@
 		F73865DF2C37C06C00837FE4 /* DataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
 		F73865E12C37C0A300837FE4 /* Enum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Enum.swift; sourceTree = "<group>"; };
 		F73865E32C37C11B00837FE4 /* ImageProcess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageProcess.swift; sourceTree = "<group>"; };
+		F7A100002F6C0001000AF001 /* ResampleFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResampleFilter.swift; sourceTree = "<group>"; };
+		F7A100102F6C0101000AF010 /* InitialZoom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitialZoom.swift; sourceTree = "<group>"; };
+		F7A100202F6C0201000AF020 /* ContentZoomGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentZoomGeometry.swift; sourceTree = "<group>"; };
 		F73865E52C37C1AA00837FE4 /* DrawingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingView.swift; sourceTree = "<group>"; };
 		F73865E72C37C26C00837FE4 /* FFmpegKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFmpegKit.swift; sourceTree = "<group>"; };
 		F74636352C4F43AE0086E920 /* AdvancedSettingsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AdvancedSettingsViewController.swift; sourceTree = "<group>"; };
@@ -226,6 +232,9 @@
 				F73865E72C37C26C00837FE4 /* FFmpegKit.swift */,
 				F7F600472E1E094A00ED8536 /* FinderTag.swift */,
 				F73865E32C37C11B00837FE4 /* ImageProcess.swift */,
+				F7A100002F6C0001000AF001 /* ResampleFilter.swift */,
+				F7A100102F6C0101000AF010 /* InitialZoom.swift */,
+				F7A100202F6C0201000AF020 /* ContentZoomGeometry.swift */,
 				F76E2EFD2C3B765C0031B0B4 /* Log.swift */,
 				F73865DA2C37BC1500837FE4 /* RefCode.swift */,
 				F7AAA8BC2D9BD1ED007CE330 /* VideoProcess.swift */,
@@ -508,6 +517,9 @@
 				F73865D72C37BB2900837FE4 /* CustomOutlineView.swift in Sources */,
 				F72B1E762F713DA80056B19F /* TaggingSettingsViewController.swift in Sources */,
 				F73865E42C37C11B00837FE4 /* ImageProcess.swift in Sources */,
+				F7A100012F6C0001000AF001 /* ResampleFilter.swift in Sources */,
+				F7A100112F6C0101000AF011 /* InitialZoom.swift in Sources */,
+				F7A100212F6C0201000AF021 /* ContentZoomGeometry.swift in Sources */,
 				F74D55562F0E487C00C9AB85 /* RightMouseGesture.swift in Sources */,
 				F71DCEB92BD425D6006E5B1E /* CustomOutlineViewManager.swift in Sources */,
 				F7DECD6D2D00939300ECC099 /* CustomEffectView.swift in Sources */,

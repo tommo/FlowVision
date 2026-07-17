@@ -61,6 +61,8 @@ class LargeImageView: NSView {
     var file: FileModel = FileModel(path: "", ver: 0)
     private var lastDragLocation: CGPoint?
     private var hasZoomedByWheel: Bool = false
+    /// When true, user zoomed/panned the video; layout must not force-fit until reset.
+    private var videoUserZoomed: Bool = false
     var longPressZoomTimer: Timer?
     private var wheelZoomRegenTimer: Timer?
     private var initialPos: NSPoint? = nil
@@ -68,6 +70,14 @@ class LargeImageView: NSView {
     private var initialScale: CGFloat = 1.0
     private var originalSize: CGSize?
     private let sensitivity: CGFloat = 1
+    
+    /// Zoomable surface: video player when playing video, otherwise the image view.
+    var zoomContentView: NSView {
+        if file.type == .video && !videoView.isHidden {
+            return videoView
+        }
+        return imageView
+    }
     
     private var lastClickTime: TimeInterval = 0
     private var lastClickLocation: NSPoint = NSPoint.zero
@@ -105,6 +115,7 @@ class LargeImageView: NSView {
         imageView.imageScaling = .scaleAxesIndependently
         imageView.wantsLayer = true
         imageView.animates=true
+        imageView.applyResampleFilters()
         self.addSubview(imageView)
 
         videoView = LargeAVPlayerView(frame: self.bounds)
@@ -553,24 +564,33 @@ class LargeImageView: NSView {
         super.resizeSubviews(withOldSize: oldSize)
         
         let newSize = self.bounds.size
-        let imageViewSize = imageView.frame.size
-
         let deltaX = (newSize.width - oldSize.width) / 2
         let deltaY = (newSize.height - oldSize.height) / 2
 
-        let newX = imageView.frame.origin.x + deltaX
-        let newY = imageView.frame.origin.y + deltaY
-        
-        // 窗口变化时大图随缩放居中
-        // Center large image when window size changes
-        imageView.frame = CGRect(x: newX, y: newY, width: imageViewSize.width, height: imageViewSize.height)
-        
-        // 同步编辑画布位置
-        // Sync editing canvas position
-        syncEditingCanvasFrame()
-        
-        if file.type == .video {
-            determineBlackBg()
+        // 窗口变化时内容随缩放居中（图像始终；视频在用户缩放时保持平移）
+        // Re-center content when the view resizes
+        if file.type == .image {
+            let imageViewSize = imageView.frame.size
+            imageView.frame = CGRect(
+                x: imageView.frame.origin.x + deltaX,
+                y: imageView.frame.origin.y + deltaY,
+                width: imageViewSize.width,
+                height: imageViewSize.height
+            )
+            syncEditingCanvasFrame()
+        } else if file.type == .video {
+            if videoUserZoomed {
+                let s = videoView.frame.size
+                videoView.frame = CGRect(
+                    x: videoView.frame.origin.x + deltaX,
+                    y: videoView.frame.origin.y + deltaY,
+                    width: s.width,
+                    height: s.height
+                )
+            } else {
+                // Re-fit letterbox / full-bleed without dropping intermediate zoom flags
+                applyDefaultVideoLayout()
+            }
         }
         
         // 更新箭头视图位置
@@ -722,6 +742,11 @@ class LargeImageView: NSView {
             // Check if currently playing video is already the target video
             if currentPlayingURL == url && !reload && !reloadForAB {
                 return
+            }
+
+            // New video (or forced reload): reset zoom to default fit layout
+            if currentPlayingURL != url || reload {
+                videoUserZoomed = false
             }
 
             if currentPlayingURL != url && globalVar.videoPlayRememberPosition {
@@ -1273,29 +1298,43 @@ class LargeImageView: NSView {
     
     func disableBlackBgForVideo() {
         let originalSize = file.originalSize ?? imageView.frame.size
-        let zoomFrame = AVMakeRect(aspectRatio: originalSize, insideRect: self.frame)
+        let zoomFrame = fitContentRect(aspectRatio: originalSize, insideRect: self.frame)
         videoView.frame = NSRect(x: round(zoomFrame.origin.x), y: round(zoomFrame.origin.y), width: round(zoomFrame.width), height: round(zoomFrame.height))
+    }
+    
+    /// Reset video surface to default contain/fill-for-black-bg layout and clear user zoom.
+    func resetVideoZoomToFit() {
+        videoUserZoomed = false
+        applyDefaultVideoLayout()
+        calcRatio(isShowPrompt: true)
+    }
+    
+    private func applyDefaultVideoLayout() {
+        disableBlackBg()
+        if let window = self.window,
+           window.styleMask.contains(.fullScreen) {
+            if globalVar.blackBgInFullScreenForVideo || globalVar.blackBgAlwaysForVideo {
+                enableBlackBgForVideo()
+            } else {
+                disableBlackBgForVideo()
+            }
+        } else {
+            if globalVar.blackBgAlwaysForVideo {
+                enableBlackBgForVideo()
+            } else {
+                disableBlackBgForVideo()
+            }
+        }
     }
     
     func determineBlackBg() {
         if file.type == .video {
-            disableBlackBg()
-            
-            if let window = self.window,
-               window.styleMask.contains(.fullScreen) {
-                if globalVar.blackBgInFullScreenForVideo || globalVar.blackBgAlwaysForVideo {
-                    enableBlackBgForVideo()
-                } else {
-                    disableBlackBgForVideo()
-                }
-            } else {
-                if globalVar.blackBgAlwaysForVideo {
-                    enableBlackBgForVideo()
-                } else {
-                    disableBlackBgForVideo()
-                }
+            // Preserve user zoom/pan until explicit fit/reset or a new video is opened.
+            if videoUserZoomed {
+                disableBlackBg()
+                return
             }
-            
+            applyDefaultVideoLayout()
         } else {
             if let window = self.window,
                window.styleMask.contains(.fullScreen) {
@@ -1316,51 +1355,43 @@ class LargeImageView: NSView {
     
     func zoom(direction: Int = 0){
         guard let viewController = getViewController(self) else { return }
-        if file.type == .video {return}
         
-        // guard let originalSize = viewController.getCurrentImageOriginalSizeInScreenScale() else { return }
-        // let currentSize = imageView.bounds.size
-//        var scale = 1.0
-//        if direction == -1 {
-//            scale = 0.8
-//        }else if direction == +1 {
-//            scale = 1.25
-//        }
-        // applyZoom(scale: scale, originalSize: currentSize, centerPoint: CGPoint(x: imageView.bounds.size.width/2, y: imageView.bounds.size.height/2))
-        
+        let content = zoomContentView
         let zoomFactor: CGFloat = 1.25
-        let locationInView = self.convert(NSPoint(x: self.frame.size.width / 2, y: self.frame.size.height / 2), from: nil)
-        let locationInImageView = imageView.convert(locationInView, from: self)
+        let locationInView = NSPoint(x: self.bounds.midX, y: self.bounds.midY)
+        let locationInContent = content.convert(locationInView, from: self)
         
+        let factor: CGFloat
         if direction > 0 {
-            if isExceedZoomLimit(enlarge: true, width: imageView.frame.size.width, height: imageView.frame.size.height){
+            if isExceedZoomLimit(enlarge: true, width: content.frame.size.width, height: content.frame.size.height){
                 return
             }
-            hasZoomedByWheel=true
-            
-            imageView.frame.size.width *= zoomFactor
-            imageView.frame.size.height *= zoomFactor
-            imageView.frame.origin.x -= (locationInImageView.x * (zoomFactor - 1))
-            imageView.frame.origin.y -= (locationInImageView.y * (zoomFactor - 1))
+            factor = zoomFactor
+            hasZoomedByWheel = true
         } else if direction < 0 {
-            if isExceedZoomLimit(enlarge: false, width: imageView.frame.size.width, height: imageView.frame.size.height){
+            if isExceedZoomLimit(enlarge: false, width: content.frame.size.width, height: content.frame.size.height){
                 return
             }
-            hasZoomedByWheel=true
-            
-            imageView.frame.size.width /= zoomFactor
-            imageView.frame.size.height /= zoomFactor
-            imageView.frame.origin.x += (locationInImageView.x * (1 - 1/zoomFactor))
-            imageView.frame.origin.y += (locationInImageView.y * (1 - 1/zoomFactor))
+            factor = 1 / zoomFactor
+            hasZoomedByWheel = true
+        } else {
+            return
+        }
+        
+        content.frame = applyRelativeZoom(frame: content.frame, factor: factor, anchorInContent: locationInContent)
+        if file.type == .video {
+            videoUserZoomed = true
         }
         
         // 同步编辑画布位置和大小
         // Sync editing canvas position and size
         syncEditingCanvasFrame()
         
-        // 重新绘制图像
-        // Redraw image
-        viewController.changeLargeImage(firstShowThumb: false, resetSize: false, triggeredByLongPress: false, isByZoom: true)
+        // 重新绘制图像 (video play path is a no-op for same URL)
+        // Redraw image (video: same URL short-circuits in playVideo)
+        if file.type == .image {
+            viewController.changeLargeImage(firstShowThumb: false, resetSize: false, triggeredByLongPress: false, isByZoom: true)
+        }
         
         calcRatio(isShowPrompt: true)
     }
@@ -1375,13 +1406,27 @@ class LargeImageView: NSView {
             syncEditingCanvasFrame()
             
             calcRatio(isShowPrompt: true)
+        } else if file.type == .video {
+            resetVideoZoomToFit()
         }
     }
     
+    /// Zoom to 100% (actual pixels). Photoshop-style Cmd+1.
     func zoom100(point _point: NSPoint? = nil) {
-        if file.type == .image{
+        zoomToRatio(1.0, point: _point)
+    }
+    
+    /// Zoom to 200%. Photoshop-style Cmd+2.
+    func zoom200(point _point: NSPoint? = nil) {
+        zoomToRatio(2.0, point: _point)
+    }
+    
+    /// Zoom image to a multiple of actual size (1.0 = 100%).
+    func zoomToRatio(_ ratio: CGFloat, point _point: NSPoint? = nil) {
+        if file.type == .image {
             let point = _point ?? NSPoint(x: self.frame.size.width / 2, y: self.frame.size.height / 2)
-            let zoomSize=customZoomSize()
+            let baseSize = customZoomSize()
+            let zoomSize = NSSize(width: baseSize.width * ratio, height: baseSize.height * ratio)
             let locationInView = self.convert(point, from: nil)
             let locationInImageView = imageView.convert(locationInView, from: self)
             
@@ -1403,22 +1448,30 @@ class LargeImageView: NSView {
     
     @objc private func handleMagnification(_ gesture: NSMagnificationGestureRecognizer) {
         guard let viewController = getViewController(self) else { return }
-        if file.type == .video {return}
         
+        let content = zoomContentView
         let magnification = 1 + gesture.magnification * sensitivity
         
         switch gesture.state {
         case .began:
-            initialScale = imageView.frame.width / imageView.bounds.width
-            originalSize = imageView.bounds.size
+            initialScale = content.frame.width / max(content.bounds.width, 0.0001)
+            originalSize = content.bounds.size
+            if originalSize?.width == 0 || originalSize?.height == 0 {
+                originalSize = content.frame.size
+                initialScale = 1.0
+            }
         case .changed:
             if let originalSize = originalSize {
                 let scale = initialScale * magnification
-                applyZoom(scale: scale, originalSize: originalSize, centerPoint: gesture.location(in: imageView))
+                applyZoom(scale: scale, originalSize: originalSize, centerPoint: gesture.location(in: content), contentView: content)
             }
         case .ended:
             initialScale *= magnification
-            viewController.changeLargeImage(firstShowThumb: false, resetSize: false, triggeredByLongPress: false, isByZoom: true)
+            if file.type == .video {
+                videoUserZoomed = true
+            } else {
+                viewController.changeLargeImage(firstShowThumb: false, resetSize: false, triggeredByLongPress: false, isByZoom: true)
+            }
         default:
             break
         }
@@ -1428,7 +1481,8 @@ class LargeImageView: NSView {
         _ = viewController.publicVar.timer.intervalSafe(name: "largeImageZoomForbidSwitch", second: -1)
     }
     
-    private func applyZoom(scale: CGFloat, originalSize: CGSize, centerPoint: CGPoint) {
+    private func applyZoom(scale: CGFloat, originalSize: CGSize, centerPoint: CGPoint, contentView: NSView? = nil) {
+        let content = contentView ?? zoomContentView
         let newWidth = originalSize.width * scale
         let newHeight = originalSize.height * scale
         
@@ -1442,14 +1496,15 @@ class LargeImageView: NSView {
             }
         }
         
-        
-        let deltaWidth = newWidth - imageView.frame.width
-        let deltaHeight = newHeight - imageView.frame.height
-        
-        let newOriginX = imageView.frame.origin.x - deltaWidth * (centerPoint.x / imageView.frame.width)
-        let newOriginY = imageView.frame.origin.y - deltaHeight * (centerPoint.y / imageView.frame.height)
-        
-        imageView.frame = CGRect(x: newOriginX, y: newOriginY, width: newWidth, height: newHeight)
+        content.frame = applyAbsoluteZoom(
+            baseSize: originalSize,
+            scale: scale,
+            centerPoint: centerPoint,
+            currentFrame: content.frame
+        )
+        if file.type == .video {
+            videoUserZoomed = true
+        }
         
         // 同步编辑画布位置和大小
         // Sync editing canvas position and size
@@ -1460,13 +1515,34 @@ class LargeImageView: NSView {
     
     func calcRatio(isShowPrompt: Bool) {
         guard let viewController = getViewController(self) else { return }
-        let ratio = imageView.frame.size.width/customZoomSize().width
+        let content = zoomContentView
+        let base = customZoomSize()
+        let denom = max(base.width, 0.0001)
+        let ratio = content.frame.size.width / denom
         viewController.publicVar.zoomLock = ratio
         
         if isShowPrompt {
             let text = String(Int((ratio*100).rounded()))
             ratioView.showInfo(text: NSLocalizedString("Zoom", comment: "缩放")+": "+text+"%")
         }
+    }
+    
+    /// Pan the zoom content surface by deltas and clamp (image or video).
+    func panZoomContent(deltaX: CGFloat, deltaY: CGFloat) {
+        let content = zoomContentView
+        content.frame = panContentFrame(content.frame, deltaX: deltaX, deltaY: deltaY, in: self.bounds)
+        if file.type == .video {
+            videoUserZoomed = true
+        }
+        if file.type == .image {
+            syncEditingCanvasFrame()
+        }
+    }
+    
+    /// Whether the zoom surface is larger than the view on either axis (can pan).
+    func zoomContentCanPan() -> Bool {
+        let f = zoomContentView.frame
+        return f.width > bounds.width || f.height > bounds.height
     }
     
     func showInfo(_ info: String, timeOut: Double = 1.0) {
@@ -1558,6 +1634,24 @@ class LargeImageView: NSView {
         return videoControlsView.bounds.contains(location)
     }
     
+    /// Whether the event is over the custom volume/seek chrome (for ViewController event monitors).
+    func isPointerOverVideoControls(_ event: NSEvent) -> Bool {
+        isEventInVideoControls(event)
+    }
+    
+    /// Whether the event is over the video surface in large-view coordinates (not only the letterboxed content).
+    func isPointerOverVideoSurface(_ event: NSEvent) -> Bool {
+        guard file.type == .video, !videoView.isHidden else { return false }
+        let location = convert(event.locationInWindow, from: nil)
+        return videoView.frame.contains(location)
+    }
+    
+    /// Window-point hit test against this large view (used by ViewController local monitors).
+    func boundsContainsWindowPoint(_ windowPoint: NSPoint) -> Bool {
+        let location = convert(windowPoint, from: nil)
+        return bounds.contains(location)
+    }
+    
     override func mouseDown(with event: NSEvent) {
         guard let viewController = getViewController(self) else { return }
         if isEventInVideoControls(event) { return }
@@ -1629,6 +1723,13 @@ class LargeImageView: NSView {
             }
             
             // hasZoomed=true
+        } else if file.type == .video {
+            // Long-press left: zoom in a step; long-press right: fit (like image 100% / fit)
+            if !viewController.publicVar.isRightMouseDown {
+                zoom(direction: +1)
+            } else {
+                zoomFit()
+            }
         }
     }
     
@@ -1694,9 +1795,9 @@ class LargeImageView: NSView {
             }
         }
 
-        // 暂停/恢复视频
-        // Pause/resume video
-        if !(viewController.publicVar.isRightMouseDown) && isKeyWindowWhenMouseDown {
+        // 暂停/恢复视频（拖拽平移/寻帧后不切换播放状态）
+        // Pause/resume video (skip after drag pan/seek)
+        if !(viewController.publicVar.isRightMouseDown) && isKeyWindowWhenMouseDown && !doNotPopRightMenu {
             if file.type == .video && viewController.publicVar.isInLargeViewAfterAnimate {
                 if videoPreventDoubleClickOpenPauseFlag {
                     videoPreventDoubleClickOpenPauseFlag = false
@@ -1727,37 +1828,15 @@ class LargeImageView: NSView {
             let dy = newLocation.y - lastLocation.y
 
             if file.type == .image {
-                imageView.frame.origin.x += dx
-                imageView.frame.origin.y += dy
-                
-                // 限制图片不能完全移出视野范围
-                // Limit image from being completely moved out of view
-                let imageFrame = imageView.frame
-                let viewFrame = self.frame
-                
-                // 检查是否完全超出视野
-                // Check if completely out of view
-                if imageFrame.maxX < 0 {
-                    imageView.frame.origin.x = -imageFrame.width
-                }
-                if imageFrame.minX > viewFrame.width {
-                    imageView.frame.origin.x = viewFrame.width
-                }
-                if imageFrame.maxY < 0 {
-                    imageView.frame.origin.y = -imageFrame.height
-                }
-                if imageFrame.minY > viewFrame.height {
-                    imageView.frame.origin.y = viewFrame.height
-                }
-                
-                // 同步编辑画布位置
-                // Sync editing canvas position
-                syncEditingCanvasFrame()
+                panZoomContent(deltaX: dx, deltaY: dy)
             } else if file.type == .video {
                 if viewController.publicVar.isRightMouseDown {
                     let effectiveDx = userInterfaceLayoutDirection == .rightToLeft ? -dx : dx
                     seekVideoByDrag(deltaX: effectiveDx)
                     videoControlsView.showControls()
+                } else {
+                    // Left-drag pans zoomed video (same as image); short clicks still pause on mouseUp
+                    panZoomContent(deltaX: dx, deltaY: dy)
                 }
             }
         }
@@ -1963,37 +2042,33 @@ class LargeImageView: NSView {
                 wheelZoomRegenTimer = nil
                 wheelZoomRegenTimer = Timer.scheduledTimer(withTimeInterval: 0.4, repeats: false) { [weak self] _ in
                     guard let self=self else{return}
-                    viewController.changeLargeImage(firstShowThumb: false, resetSize: false, triggeredByLongPress: false, isByZoom: true)
+                    if self.file.type == .image {
+                        viewController.changeLargeImage(firstShowThumb: false, resetSize: false, triggeredByLongPress: false, isByZoom: true)
+                    }
                     hasZoomedByWheel=false
                 }
             }
 
+            let content = zoomContentView
             let zoomFactor: CGFloat = 1.0 + (0.1 * globalVar.scrollSensitivityRatio)
             let locationInView = self.convert(event.locationInWindow, from: nil)
-            let locationInImageView = imageView.convert(locationInView, from: self)
+            let locationInContent = content.convert(locationInView, from: self)
             
             if event.deltaY > 0 {
-                if isExceedZoomLimit(enlarge: true, width: imageView.frame.size.width, height: imageView.frame.size.height){
+                if isExceedZoomLimit(enlarge: true, width: content.frame.size.width, height: content.frame.size.height){
                     return
                 }
                 hasZoomedByWheel=true
-                
-                imageView.frame.size.width *= zoomFactor
-                imageView.frame.size.height *= zoomFactor
-                imageView.frame.origin.x -= (locationInImageView.x * (zoomFactor - 1))
-                imageView.frame.origin.y -= (locationInImageView.y * (zoomFactor - 1))
+                content.frame = applyRelativeZoom(frame: content.frame, factor: zoomFactor, anchorInContent: locationInContent)
+                if file.type == .video { videoUserZoomed = true }
             } else if event.deltaY < 0 {
-                if isExceedZoomLimit(enlarge: false, width: imageView.frame.size.width, height: imageView.frame.size.height){
+                if isExceedZoomLimit(enlarge: false, width: content.frame.size.width, height: content.frame.size.height){
                     return
                 }
                 hasZoomedByWheel=true
-                
-                imageView.frame.size.width /= zoomFactor
-                imageView.frame.size.height /= zoomFactor
-                imageView.frame.origin.x += (locationInImageView.x * (1 - 1/zoomFactor))
-                imageView.frame.origin.y += (locationInImageView.y * (1 - 1/zoomFactor))
+                content.frame = applyRelativeZoom(frame: content.frame, factor: 1 / zoomFactor, anchorInContent: locationInContent)
+                if file.type == .video { videoUserZoomed = true }
             }
-            // log(imageView.frame.size,imageView.frame.origin)
             
             // 同步编辑画布位置和大小
             // Sync editing canvas position and size

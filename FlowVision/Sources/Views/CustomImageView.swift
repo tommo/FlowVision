@@ -202,7 +202,38 @@ class CustomLargeImageView: IntegerImageView {
             } else {
                 super.image = newValue
             }
+            applyResampleFilters()
         }
+    }
+    
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        applyResampleFilters()
+    }
+    
+    /// When "nearest when upsampling" is on, force nearest-neighbor for GPU/AppKit scale-up.
+    /// Large view often loads the original and scales via the image view frame (doNotGenResized),
+    /// so CGContext interpolation alone never runs for pure upsampling.
+    func applyResampleFilters() {
+        wantsLayer = true
+        if globalVar.useNearestFilterWhenUpsampling {
+            layer?.magnificationFilter = .nearest
+            // Keep minification linear so fit-to-window of large originals (if ever layer-scaled) stays smooth;
+            // downsampling quality is handled in getResizedImage when a resized bitmap is generated.
+            layer?.minificationFilter = .linear
+        } else {
+            layer?.magnificationFilter = .linear
+            layer?.minificationFilter = .linear
+        }
+        needsDisplay = true
+    }
+    
+    override func draw(_ dirtyRect: NSRect) {
+        // NSImageView software path: honor nearest for upsampling
+        if globalVar.useNearestFilterWhenUpsampling {
+            NSGraphicsContext.current?.imageInterpolation = .none
+        }
+        super.draw(dirtyRect)
     }
     
     // 对当前显示的图像执行翻转（翻转的翻转=还原，无需保存原图）

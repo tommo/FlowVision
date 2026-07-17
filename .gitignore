@@ -1,2 +1,9 @@
 xcuserdata/
 LocalDev.xcconfig
+
+# Local build outputs
+build/
+dist/
+FlowVision.app
+*.xcuserstate
+DerivedData/

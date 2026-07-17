@@ -20,6 +20,13 @@
                 <outlet property="radioGlassForVideo" destination="XZ6-Us-IOj" id="PEL-o1-jkH"/>
                 <outlet property="randomFolderThumbCheckbox" destination="oZE-97-h1J" id="BN1-Ep-r4A"/>
                 <outlet property="scrollMouseWheelToZoomCheckbox" destination="alP-Gg-eDb" id="zuK-CY-j3h"/>
+                <outlet property="useNearestFilterWhenUpsamplingCheckbox" destination="nrf-up-chk" id="nrf-up-out"/>
+                <outlet property="useLanczosFilterWhenDownsamplingCheckbox" destination="lnc-dn-chk" id="lnc-dn-out"/>
+                <outlet property="initialZoomPopup" destination="izm-pop" id="izm-out"/>
+                <outlet property="portableModeCheckbox" destination="prt-mod-chk" id="prt-mod-out"/>
+                <outlet property="portableKeepWindowCheckbox" destination="prt-kw-chk" id="prt-kw-out"/>
+                <outlet property="portableImageUseActualSizeCheckbox" destination="prt-act-chk" id="prt-act-out"/>
+                <outlet property="portableCenterOnOpenCheckbox" destination="prt-ctr-chk" id="prt-ctr-out"/>
                 <outlet property="thumbnailOfFolderUseStackingCheckbox" destination="0SG-Uv-iQq" id="ZqI-fb-nPd"/>
                 <outlet property="useInternalPlayerCheckbox" destination="d7b-FI-cKc" id="zGg-yO-Q1H"/>
                 <outlet property="usePinyinInitialSearchCheckbox" destination="lqa-M3-fXH" id="LEw-T4-60h"/>
@@ -30,10 +37,10 @@
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="c22-O7-iKe">
-            <rect key="frame" x="0.0" y="0.0" width="510" height="712"/>
+            <rect key="frame" x="0.0" y="0.0" width="510" height="900"/>
             <subviews>
                 <gridView xPlacement="center" yPlacement="center" rowAlignment="none" rowSpacing="8" columnSpacing="10" translatesAutoresizingMaskIntoConstraints="NO" id="lkV-Y2-eOl">
-                    <rect key="frame" x="30" y="120" width="450" height="572"/>
+                    <rect key="frame" x="30" y="80" width="450" height="800"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="450" id="5HG-su-XZq"/>
                     </constraints>
@@ -41,6 +48,13 @@
                         <gridRow id="uLO-pI-Rng"/>
                         <gridRow id="2Gk-hk-JJm"/>
                         <gridRow id="0Sb-Xe-UNW"/>
+                        <gridRow id="nrf-up-row"/>
+                        <gridRow id="lnc-dn-row"/>
+                        <gridRow id="izm-row"/>
+                        <gridRow id="prt-mod-row"/>
+                        <gridRow id="prt-kw-row"/>
+                        <gridRow id="prt-act-row"/>
+                        <gridRow id="prt-ctr-row"/>
                         <gridRow id="6mQ-YR-5PU"/>
                         <gridRow height="20" id="1wf-vq-gkY"/>
                         <gridRow id="jZp-Gi-lxz"/>
@@ -107,6 +121,113 @@
                                 </buttonCell>
                                 <connections>
                                     <action selector="scrollMouseWheelToZoomToggled:" target="-2" id="an6-84-nD6"/>
+                                </connections>
+                            </button>
+                        </gridCell>
+                        <gridCell row="nrf-up-row" column="GGj-JC-w4E" id="nrf-up-lbl"/>
+                        <gridCell row="nrf-up-row" column="cs9-fm-l2F" id="nrf-up-cel">
+                            <button key="contentView" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nrf-up-chk">
+                                <rect key="frame" x="99" y="469" width="320" height="18"/>
+                                <buttonCell key="cell" type="check" title="Use Nearest Filter When Upsampling" bezelStyle="regularSquare" imagePosition="left" inset="2" id="nrf-up-cel2">
+                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="useNearestFilterWhenUpsamplingToggled:" target="-2" id="nrf-up-act"/>
+                                </connections>
+                            </button>
+                        </gridCell>
+                        <gridCell row="lnc-dn-row" column="GGj-JC-w4E" id="lnc-dn-lbl"/>
+                        <gridCell row="lnc-dn-row" column="cs9-fm-l2F" id="lnc-dn-cel">
+                            <button key="contentView" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="lnc-dn-chk">
+                                <rect key="frame" x="99" y="445" width="340" height="18"/>
+                                <buttonCell key="cell" type="check" title="Use Lanczos Filter When Downsampling" bezelStyle="regularSquare" imagePosition="left" inset="2" id="lnc-dn-cel2">
+                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="useLanczosFilterWhenDownsamplingToggled:" target="-2" id="lnc-dn-act"/>
+                                </connections>
+                            </button>
+                        </gridCell>
+                        <gridCell row="izm-row" column="GGj-JC-w4E" id="izm-lbl-c">
+                            <textField key="contentView" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="izm-lbl">
+                                <rect key="frame" x="8" y="420" width="85" height="16"/>
+                                <textFieldCell key="cell" alignment="right" title="Initial Zoom:" id="izm-lbl-cell">
+                                    <font key="font" usesAppearanceFont="YES"/>
+                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                        </gridCell>
+                        <gridCell row="izm-row" column="cs9-fm-l2F" id="izm-pop-c">
+                            <popUpButton key="contentView" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="izm-pop">
+                                <rect key="frame" x="99" y="414" width="220" height="25"/>
+                                <popUpButtonCell key="cell" type="push" title="Fit to Window" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="izm-pop-cell">
+                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                    <font key="font" metaFont="menu"/>
+                                    <menu key="menu" id="izm-menu">
+                                        <items>
+                                            <menuItem title="Fit to Window" id="izm-m-fit"/>
+                                            <menuItem title="Actual Size (100%)" id="izm-m-act"/>
+                                            <menuItem title="Fill Window" id="izm-m-fill"/>
+                                        </items>
+                                    </menu>
+                                </popUpButtonCell>
+                                <connections>
+                                    <action selector="initialZoomPopupChanged:" target="-2" id="izm-act"/>
+                                </connections>
+                            </popUpButton>
+                        </gridCell>
+                        <gridCell row="prt-mod-row" column="GGj-JC-w4E" id="prt-mod-l"/>
+                        <gridCell row="prt-mod-row" column="cs9-fm-l2F" id="prt-mod-c">
+                            <button key="contentView" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="prt-mod-chk">
+                                <rect key="frame" x="99" y="390" width="280" height="18"/>
+                                <buttonCell key="cell" type="check" title="Portable Browsing Mode" bezelStyle="regularSquare" imagePosition="left" inset="2" id="prt-mod-cel2">
+                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="portableModeToggled:" target="-2" id="prt-mod-act"/>
+                                </connections>
+                            </button>
+                        </gridCell>
+                        <gridCell row="prt-kw-row" column="GGj-JC-w4E" id="prt-kw-l"/>
+                        <gridCell row="prt-kw-row" column="cs9-fm-l2F" id="prt-kw-c">
+                            <button key="contentView" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="prt-kw-chk">
+                                <rect key="frame" x="99" y="366" width="320" height="18"/>
+                                <buttonCell key="cell" type="check" title="Keep Window Size When Browsing" bezelStyle="regularSquare" imagePosition="left" inset="2" id="prt-kw-cel2">
+                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="portableKeepWindowToggled:" target="-2" id="prt-kw-act"/>
+                                </connections>
+                            </button>
+                        </gridCell>
+                        <gridCell row="prt-act-row" column="GGj-JC-w4E" id="prt-act-l"/>
+                        <gridCell row="prt-act-row" column="cs9-fm-l2F" id="prt-act-c">
+                            <button key="contentView" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="prt-act-chk">
+                                <rect key="frame" x="99" y="342" width="340" height="18"/>
+                                <buttonCell key="cell" type="check" title="Portable Window Uses Actual Image Size" bezelStyle="regularSquare" imagePosition="left" inset="2" id="prt-act-cel2">
+                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="portableImageUseActualSizeToggled:" target="-2" id="prt-act-act"/>
+                                </connections>
+                            </button>
+                        </gridCell>
+                        <gridCell row="prt-ctr-row" column="GGj-JC-w4E" id="prt-ctr-l"/>
+                        <gridCell row="prt-ctr-row" column="cs9-fm-l2F" id="prt-ctr-c">
+                            <button key="contentView" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="prt-ctr-chk">
+                                <rect key="frame" x="99" y="318" width="280" height="18"/>
+                                <buttonCell key="cell" type="check" title="Center Window When Opening File" bezelStyle="regularSquare" imagePosition="left" inset="2" id="prt-ctr-cel2">
+                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="portableCenterOnOpenToggled:" target="-2" id="prt-ctr-act"/>
                                 </connections>
                             </button>
                         </gridCell>

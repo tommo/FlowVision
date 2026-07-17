@@ -542,8 +542,11 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
         // TODO: 没有工具栏时，载入时折叠且divider宽度设为0会造成菜单栏变白
         // TODO: When there's no toolbar, collapsing on load and setting divider width to 0 will cause menu bar to turn white
 
-        if let isLargeImageFitWindow = UserDefaults.standard.value(forKey: "isLargeImageFitWindow") as? Bool {
-            publicVar.isLargeImageFitWindow=isLargeImageFitWindow
+        // Sync legacy fit flag from global initial zoom mode (loaded in AppDelegate).
+        publicVar.isLargeImageFitWindow = (globalVar.initialZoomMode == .fit || globalVar.initialZoomMode == .fill)
+        if let isLargeImageFitWindow = UserDefaults.standard.value(forKey: "isLargeImageFitWindow") as? Bool,
+           UserDefaults.standard.value(forKey: "initialZoomMode") == nil {
+            publicVar.isLargeImageFitWindow = isLargeImageFitWindow
         }
         if let isShowHiddenFile = UserDefaults.standard.value(forKey: "isShowHiddenFile") as? Bool {
             publicVar.isShowHiddenFile = isShowHiddenFile
@@ -664,26 +667,19 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
         outlineView.doubleAction = #selector(outlineViewDoubleClicked(_:))
         
         // 鼠标左键事件
-        // Left mouse button event
+        // Left mouse button event — AVPlayerView eats hits on the video surface, so forward
+        // down/up/drag to LargeImageView for pause + pan (skip custom volume/seek chrome).
         eventMonitorLeftMouseDown = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
             guard let self = self else { return event }
             if event.window != self.view.window { return event }
 
             if publicVar.isInLargeView && largeImageView.file.type == .video {
-                let clickLocation = event.locationInWindow
-                let videoControlYmin = largeImageView.videoView.frame.minY
-                let videoControlYmax = largeImageView.videoView.frame.maxY
-                let videoControlXmin = largeImageView.videoView.frame.minX
-                let videoControlXmax = largeImageView.videoView.frame.maxX
-                let coreAreaYmax = coreAreaView.frame.maxY - (globalVar.autoHideToolbar ? 40 : 0)
-                
-                if clickLocation.y > videoControlYmin + 40 && clickLocation.y < videoControlYmax,
-                   clickLocation.x > videoControlXmin && clickLocation.x < videoControlXmax,
-                   clickLocation.y < coreAreaYmax {
-                    // 仅在视频范围内响应，范围外的由largeImageView中的鼠标事件正常处理
-                    // Only respond within video range, outside range handled normally by mouse events in largeImageView
+                if largeImageView.isPointerOverVideoControls(event) {
+                    return event
+                }
+                if largeImageView.isPointerOverVideoSurface(event)
+                    || largeImageView.boundsContainsWindowPoint(event.locationInWindow) {
                     largeImageView.mouseDown(with: event)
-                    // return nil
                 }
             }
             
@@ -695,50 +691,38 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
             if event.window != self.view.window { return event }
 
             if publicVar.isInLargeView && largeImageView.file.type == .video {
-                let clickLocation = event.locationInWindow
-                let videoControlYmin = largeImageView.videoView.frame.minY
-                let videoControlYmax = largeImageView.videoView.frame.maxY
-                let videoControlXmin = largeImageView.videoView.frame.minX
-                let videoControlXmax = largeImageView.videoView.frame.maxX
-                let coreAreaYmax = coreAreaView.frame.maxY - (globalVar.autoHideToolbar ? 40 : 0)
-                
-                if clickLocation.y > videoControlYmin + 40 && clickLocation.y < videoControlYmax,
-                   clickLocation.x > videoControlXmin && clickLocation.x < videoControlXmax,
-                   clickLocation.y < coreAreaYmax {
-                    // 仅在视频范围内响应，范围外的由largeImageView中的鼠标事件正常处理
-                    // Only respond within video range, outside range handled normally by mouse events in largeImageView
+                if largeImageView.isPointerOverVideoControls(event) {
+                    return event
+                }
+                // Always complete a left gesture if we armed pan/pause on mouseDown.
+                if publicVar.isLeftMouseDown {
                     largeImageView.mouseUp(with: event)
-                    // return nil
                 }
             }
             
             return event
         }
 
-        // 拖动音量滚动条时无法触发这个事件
-        // This event cannot be triggered when dragging volume scrollbar
-//        eventMonitorLeftMouseDragged = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
-//            guard let self = self else { return event }
-//            if event.window != self.view.window { return event }
-//
-//            if publicVar.isInLargeView && largeImageView.file.type == .video {
-//                let clickLocation = event.locationInWindow
-//                let videoControlYmin = largeImageView.videoView.frame.minY
-//                let videoControlYmax = largeImageView.videoView.frame.maxY
-//                let videoControlXmin = largeImageView.videoView.frame.minX
-//                let videoControlXmax = largeImageView.videoView.frame.maxX
-//                
-//                if clickLocation.y > videoControlYmin + 40 && clickLocation.y < videoControlYmax,
-//                   clickLocation.x > videoControlXmin && clickLocation.x < videoControlXmax {
-//                    // 仅在视频范围内响应，范围外的由largeImageView中的鼠标事件正常处理
-//                    // Only respond within video range, outside range handled normally by mouse events in largeImageView
-//                    largeImageView.mouseDragged(with: event)
-//                    // return nil
-//                }
-//            }
-//            
-//            return event
-//        }
+        // AVPlayerView swallows left-drag; forward to LargeImageView for pan when over the video
+        // surface but not over the custom volume/seek controls (those must keep receiving events).
+        eventMonitorLeftMouseDragged = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
+            guard let self = self else { return event }
+            if event.window != self.view.window { return event }
+
+            if publicVar.isInLargeView && largeImageView.file.type == .video {
+                // Let control chrome (volume slider, scrubber) handle its own drag.
+                if largeImageView.isPointerOverVideoControls(event) {
+                    return event
+                }
+                // Forward pan while left button is down (mouseDown already primed lastDragLocation).
+                if publicVar.isLeftMouseDown {
+                    largeImageView.mouseDragged(with: event)
+                    return nil
+                }
+            }
+            
+            return event
+        }
         
         // 双击collectionView
         // Double-click collectionView
@@ -2066,39 +2050,22 @@ class ViewController: NSViewController, NSSplitViewDelegate, NSSearchFieldDelega
         // When scroll wheel is used for zooming
         if globalVar.scrollMouseWheelToZoom || isCommandKeyPressed() {return}
         
-        // 滚动滚轮或者双指操作触控板来移动图像
-        // Scroll wheel or double finger operation on trackpad to move image
-        if publicVar.isPanWhenZoomed && !publicVar.isLeftMouseDown && !publicVar.isRightMouseDown {
-            let isTrackPad = abs(event.scrollingDeltaY)+abs(event.scrollingDeltaX) > abs(event.deltaY)
-            if largeImageView.imageView.frame.height > largeImageView.frame.height || (isTrackPad && largeImageView.imageView.frame.width > largeImageView.frame.width) {
-                if isTrackPad {
-                    largeImageView.imageView.frame.origin.x += event.scrollingDeltaX
-                    largeImageView.imageView.frame.origin.y -= event.scrollingDeltaY
-                } else {
-                    largeImageView.imageView.frame.origin.x += event.deltaX * 10
-                    largeImageView.imageView.frame.origin.y -= event.deltaY * 10
-                }
-                // 限制图片不能完全移出视野范围
-                // Limit image from being completely moved out of view
-                let imageFrame = largeImageView.imageView.frame
-                let viewFrame = largeImageView.frame
-                
-                // 检查是否完全超出视野
-                // Check if completely out of view
-                if imageFrame.maxX < 0 {
-                    largeImageView.imageView.frame.origin.x = -imageFrame.width
-                }
-                if imageFrame.minX > viewFrame.width {
-                    largeImageView.imageView.frame.origin.x = viewFrame.width
-                }
-                if imageFrame.maxY < 0 {
-                    largeImageView.imageView.frame.origin.y = -imageFrame.height
-                }
-                if imageFrame.minY > viewFrame.height {
-                    largeImageView.imageView.frame.origin.y = viewFrame.height
-                }
-                return
+        // 滚动滚轮或者双指操作触控板来移动图像/视频
+        // Scroll wheel or two-finger trackpad pans the zoom surface (image or video)
+        // Trackpad always pans in 2D when the content can move; mouse still respects isPanWhenZoomed
+        let isTrackPad = abs(event.scrollingDeltaY) + abs(event.scrollingDeltaX) > abs(event.deltaY)
+        let contentCanMove = largeImageView.zoomContentCanPan()
+        let shouldPan = !publicVar.isLeftMouseDown && !publicVar.isRightMouseDown
+            && contentCanMove
+            && (isTrackPad || publicVar.isPanWhenZoomed)
+        if shouldPan {
+            if isTrackPad {
+                // Always use both axes for trackpad two-finger scroll
+                largeImageView.panZoomContent(deltaX: event.scrollingDeltaX, deltaY: -event.scrollingDeltaY)
+            } else {
+                largeImageView.panZoomContent(deltaX: event.deltaX * 10, deltaY: -event.deltaY * 10)
             }
+            return
         }
         
         // 屏蔽惯性阶段的滚动

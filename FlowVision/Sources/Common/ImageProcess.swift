@@ -1206,6 +1206,22 @@ func getResizedImage(url: URL, size oriSize: NSSize, rotate: Int = 0, isRawUseEm
     // print(image.alphaInfo.rawValue)
     // print(colorSpace.model.rawValue)
     
+    // Scale relative to source pixels: >1 upsampling, <1 downsampling
+    let scaleX = pointSize.width / CGFloat(image.width)
+    let scaleY = pointSize.height / CGFloat(image.height)
+    let scale = max(scaleX, scaleY)
+    let resampleKind = selectResampleFilter(
+        scale: scale,
+        useNearestWhenUpsampling: globalVar.useNearestFilterWhenUpsampling,
+        useLanczosWhenDownsampling: globalVar.useLanczosFilterWhenDownsampling
+    )
+    // True Lanczos is only available via Core Image — prefer that path when requested for downsampling.
+    if resampleKind == .lanczos {
+        if let ciImage = getResizedImageUsingCI(url: url, size: size, rotate: rotate) {
+            return ciImage
+        }
+    }
+
     // 创建足够大的上下文以适应旋转后的尺寸
     // Create context large enough to accommodate rotated size
     let context = CGContext(data: nil,
@@ -1215,7 +1231,7 @@ func getResizedImage(url: URL, size oriSize: NSSize, rotate: Int = 0, isRawUseEm
                             bytesPerRow: 0,
                             space: colorSpace,
                             bitmapInfo: adjustedBitmapInfo)
-    context?.interpolationQuality = .high
+    context?.interpolationQuality = cgInterpolationQuality(for: resampleKind)
 
     // 调整原点到中心并应用旋转
     // Adjust origin to center and apply rotation
@@ -1282,14 +1298,46 @@ func getResizedImageUsingCI(url: URL, size: NSSize? = nil, rotate: Int = 0, useH
             // Calculate scaling ratios for width and height separately
             let scaleX = 2 * size.width / inputImage.extent.width
             let scaleY = 2 * size.height / inputImage.extent.height
-            // 使用CILanczosScaleTransform进行高质量缩放
-            // Use CILanczosScaleTransform for high-quality scaling
-            let scaleFilter = CIFilter(name: "CILanczosScaleTransform")!
-            scaleFilter.setValue(inputImage, forKey: kCIInputImageKey)
-            scaleFilter.setValue(scaleY, forKey: kCIInputScaleKey)
-            scaleFilter.setValue(scaleX/scaleY, forKey: kCIInputAspectRatioKey)
-            if let outputImage = scaleFilter.outputImage{
-                inputImage = outputImage
+            let scale = max(scaleX, scaleY)
+            let resampleKind = selectResampleFilter(
+                scale: scale,
+                useNearestWhenUpsampling: globalVar.useNearestFilterWhenUpsampling,
+                useLanczosWhenDownsampling: globalVar.useLanczosFilterWhenDownsampling
+            )
+            if shouldUseCILanczos(for: resampleKind) {
+                // 使用CILanczosScaleTransform进行高质量缩放
+                // Use CILanczosScaleTransform for high-quality scaling
+                let scaleFilter = CIFilter(name: "CILanczosScaleTransform")!
+                scaleFilter.setValue(inputImage, forKey: kCIInputImageKey)
+                scaleFilter.setValue(scaleY, forKey: kCIInputScaleKey)
+                scaleFilter.setValue(scaleX/scaleY, forKey: kCIInputAspectRatioKey)
+                if let outputImage = scaleFilter.outputImage{
+                    inputImage = outputImage
+                }
+            } else {
+                // True nearest-neighbor via CG (CI affine still interpolates).
+                let srcExtent = inputImage.extent
+                let dstW = max(1, Int(round(srcExtent.width * scaleX)))
+                let dstH = max(1, Int(round(srcExtent.height * scaleY)))
+                let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
+                if let cgCtx = CGContext(
+                    data: nil, width: dstW, height: dstH,
+                    bitsPerComponent: 8, bytesPerRow: 0,
+                    space: colorSpace,
+                    bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+                ) {
+                    cgCtx.interpolationQuality = .none
+                    let ciCtx = CIContext(options: nil)
+                    if let srcCG = ciCtx.createCGImage(inputImage, from: srcExtent) {
+                        cgCtx.draw(srcCG, in: CGRect(x: 0, y: 0, width: dstW, height: dstH))
+                        if let outCG = cgCtx.makeImage() {
+                            inputImage = CIImage(cgImage: outCG)
+                        }
+                    }
+                } else {
+                    let transform = CGAffineTransform(scaleX: scaleX, y: scaleY)
+                    inputImage = inputImage.transformed(by: transform)
+                }
             }
         }
 
@@ -2386,7 +2434,8 @@ class LargeImageProcessor {
 //    }
     
     static func getImageCache(url: URL, size: NSSize, rotate: Int = 0, ver: Int, useOriginalImage: Bool, isHDR: Bool, isRawUseEmbeddedThumb: Bool, needWaitWhenSame: Bool = true) -> NSImage? {
-        let cacheKey = "\(url.absoluteString)_\(size.width)x\(size.height)_\(rotate)_v\(ver)_hdr\(isHDR)_embeded\(isRawUseEmbeddedThumb)" as NSString
+        // Include resample options so toggling nearest/Lanczos cannot return a stale filtered image.
+        let cacheKey = makeCacheKey(url: url, size: size, rotate: rotate, ver: ver, isHDR: isHDR, isRawUseEmbeddedThumb: isRawUseEmbeddedThumb)
         // print(cacheKey)
         
         // 先检查缓存中是否已有图像（包括nil情况）
@@ -2460,10 +2509,17 @@ class LargeImageProcessor {
         }
     }
     
+    /// Shared cache-key builder so lookups stay consistent with getImageCache (includes resample flags).
+    private static func makeCacheKey(url: URL, size: NSSize, rotate: Int, ver: Int, isHDR: Bool, isRawUseEmbeddedThumb: Bool) -> NSString {
+        let nearestUp = globalVar.useNearestFilterWhenUpsampling
+        let lanczosDown = globalVar.useLanczosFilterWhenDownsampling
+        return "\(url.absoluteString)_\(size.width)x\(size.height)_\(rotate)_v\(ver)_hdr\(isHDR)_embeded\(isRawUseEmbeddedThumb)_nearUp\(nearestUp)_lancDown\(lanczosDown)" as NSString
+    }
+    
     // 检查缓存中是否有图像（且不是nil）
     // Check if image exists in cache (and is not nil)
     static func isImageCached(url: URL, size: NSSize, rotate: Int = 0, ver: Int, isHDR: Bool, isRawUseEmbeddedThumb: Bool) -> Bool {
-        let cacheKey = "\(url.absoluteString)_\(size.width)x\(size.height)_\(rotate)_v\(ver)_hdr\(isHDR)_embeded\(isRawUseEmbeddedThumb)" as NSString
+        let cacheKey = makeCacheKey(url: url, size: size, rotate: rotate, ver: ver, isHDR: isHDR, isRawUseEmbeddedThumb: isRawUseEmbeddedThumb)
         if let cachedWrapper = cache.object(forKey: cacheKey) {
             return cachedWrapper.image != nil
         }
@@ -2473,7 +2529,7 @@ class LargeImageProcessor {
     // 检查缓存中是否有图像，有的话则返回
     // Check if image exists in cache, return it if found
     static func isImageCachedAndGet(url: URL, size: NSSize, rotate: Int = 0, ver: Int, isHDR: Bool, isRawUseEmbeddedThumb: Bool) -> NSImage? {
-        let cacheKey = "\(url.absoluteString)_\(size.width)x\(size.height)_\(rotate)_v\(ver)_hdr\(isHDR)_embeded\(isRawUseEmbeddedThumb)" as NSString
+        let cacheKey = makeCacheKey(url: url, size: size, rotate: rotate, ver: ver, isHDR: isHDR, isRawUseEmbeddedThumb: isRawUseEmbeddedThumb)
         if let cachedWrapper = cache.object(forKey: cacheKey) {
             return cachedWrapper.image
         }

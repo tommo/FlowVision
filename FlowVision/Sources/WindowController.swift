@@ -55,7 +55,13 @@ class WindowController: NSWindowController, NSWindowDelegate {
         
         if globalVar.portableMode && globalVar.startSpeedUpImageSizeCache != nil {
             if let viewController = contentViewController as? ViewController {
-                viewController.adjustWindowPortable(refSize: globalVar.startSpeedUpImageSizeCache, firstShowThumb: false, animate: false, justAdjustWindowFrame: true, isToCenter: true)
+                viewController.adjustWindowPortable(
+                    refSize: globalVar.startSpeedUpImageSizeCache,
+                    firstShowThumb: false,
+                    animate: false,
+                    justAdjustWindowFrame: true,
+                    isToCenter: globalVar.portableCenterOnOpen
+                )
                 globalVar.startSpeedUpImageSizeCache=nil
             }
         }else{
@@ -150,18 +156,14 @@ class WindowController: NSWindowController, NSWindowDelegate {
         // Start timer to delay hiding cursor
         scheduleCursorHide()
 
+        // Immersive chrome: hide toolbar once; do not thrash layout on hover.
         if !globalVar.autoHideToolbar {
             window?.titlebarAppearsTransparent = true
             window?.toolbar?.isVisible = false
         }
 
-        if viewController.publicVar.isInLargeView {
-            if viewController.largeImageView.file.type == .image {
-                viewController.changeLargeImage(firstShowThumb: false, resetSize: true, triggeredByLongPress: false)
-            } else {
-                viewController.largeImageView.determineBlackBg()
-            }
-        }
+        // Re-layout after fullscreen bounds settle (avoids one-frame wrong fit).
+        relayoutContentAfterFullScreenTransition(viewController)
     }
     
     // 在窗口已经退出全屏模式时执行
@@ -178,17 +180,27 @@ class WindowController: NSWindowController, NSWindowDelegate {
             if window?.toolbar?.isVisible == false {
                 window?.titlebarAppearsTransparent = false
                 window?.toolbar?.isVisible = true
-                if let frame = windowFrameBeforeFullScreen {
-                    window?.setFrame(frame, display: true)
-                }
+            }
+            // Restore pre-fullscreen frame only when we saved one; avoid fighting system restore.
+            if let frame = windowFrameBeforeFullScreen {
+                window?.setFrame(frame, display: true)
             }
         }
         
-        if viewController.publicVar.isInLargeView {
+        relayoutContentAfterFullScreenTransition(viewController)
+    }
+    
+    /// Fit image/video to the post-transition bounds without intermediate thrashing.
+    private func relayoutContentAfterFullScreenTransition(_ viewController: ViewController) {
+        guard viewController.publicVar.isInLargeView else { return }
+        // Defer until after the window has finished resizing into/out of fullscreen.
+        DispatchQueue.main.async { [weak viewController] in
+            guard let viewController = viewController, viewController.publicVar.isInLargeView else { return }
             if viewController.largeImageView.file.type == .image {
-                viewController.changeLargeImage(firstShowThumb: false, resetSize: true, triggeredByLongPress: false)
-            } else {
-                viewController.largeImageView.determineBlackBg()
+                viewController.changeLargeImage(firstShowThumb: false, resetSize: true, triggeredByLongPress: false, isByZoom: true)
+            } else if viewController.largeImageView.file.type == .video {
+                // Reset user zoom so the frame fills the new screen cleanly.
+                viewController.largeImageView.resetVideoZoomToFit()
             }
         }
     }
@@ -224,18 +236,20 @@ class WindowController: NSWindowController, NSWindowDelegate {
             } else if !window.styleMask.contains(.fullScreen) || (location.y < window.frame.height - 60) {
                 hideTitleBar()
             }
-        }else{
-            if location.y > window.frame.height - 10 {
-                if toolbar.isVisible == false {
-                    window.titlebarAppearsTransparent = false
-                    toolbar.isVisible = true
-                    viewController.largeImageView.determineBlackBg()
-                }
-            } else if window.styleMask.contains(.fullScreen) && (location.y < window.frame.height - 30) {
-                if toolbar.isVisible == true {
-                    window.titlebarAppearsTransparent = true
-                    toolbar.isVisible = false
-                    viewController.largeImageView.determineBlackBg()
+        } else {
+            // Fullscreen: reveal toolbar only near the top edge; hide again when leaving.
+            // Do NOT call determineBlackBg here — that reflow thrash made fullscreen feel clunky.
+            if window.styleMask.contains(.fullScreen) {
+                if location.y > window.frame.height - 12 {
+                    if toolbar.isVisible == false {
+                        window.titlebarAppearsTransparent = false
+                        toolbar.isVisible = true
+                    }
+                } else if location.y < window.frame.height - 48 {
+                    if toolbar.isVisible == true {
+                        window.titlebarAppearsTransparent = true
+                        toolbar.isVisible = false
+                    }
                 }
             }
         }
@@ -1387,7 +1401,8 @@ extension WindowController: NSToolbarDelegate {
         let reduceThumb = menu.addItem(withTitle: NSLocalizedString("Reduce the Thumbnails", comment: "缩小缩略图"), action: #selector(reduceThumb), keyEquivalent: "-")
         reduceThumb.keyEquivalentModifierMask = []
         
-        let defaultThumbSize = menu.addItem(withTitle: NSLocalizedString("Default Thumbnail Size", comment: "默认缩略图大小"), action: #selector(defaultThumbSize), keyEquivalent: "0")
+        // Bare "0" no longer a shortcut (was default thumb size).
+        let defaultThumbSize = menu.addItem(withTitle: NSLocalizedString("Default Thumbnail Size", comment: "默认缩略图大小"), action: #selector(defaultThumbSize), keyEquivalent: "")
         defaultThumbSize.keyEquivalentModifierMask = []
         
 //        menu.addItem(NSMenuItem.separator())
@@ -1531,8 +1546,8 @@ extension WindowController: NSToolbarDelegate {
             let fullScreenTitle = isFullScreen
                 ? NSLocalizedString("Exit Full Screen", comment: "退出全屏")
                 : NSLocalizedString("Enter Full Screen", comment: "进入全屏")
-            let actionItemEnterFullScreen = menu.addItem(withTitle: fullScreenTitle, action: #selector(actEnterFullScreen), keyEquivalent: "\r")
-            actionItemEnterFullScreen.keyEquivalentModifierMask = [.option]
+            let actionItemEnterFullScreen = menu.addItem(withTitle: fullScreenTitle, action: #selector(actEnterFullScreen), keyEquivalent: "f")
+            actionItemEnterFullScreen.keyEquivalentModifierMask = [.command]
 
             menu.addItem(NSMenuItem.separator())
 
@@ -1677,19 +1692,20 @@ extension WindowController: NSToolbarDelegate {
 
         menu.addItem(NSMenuItem.separator())
         
-        let maximizeWindow = menu.addItem(withTitle: NSLocalizedString("Maximize Window", comment: "最大化窗口"), action: #selector(maximizeWindow), keyEquivalent: "1")
+        // Bare number keys 0–5 no longer run window-size shortcuts.
+        let maximizeWindow = menu.addItem(withTitle: NSLocalizedString("Maximize Window", comment: "最大化窗口"), action: #selector(maximizeWindow), keyEquivalent: "")
         maximizeWindow.keyEquivalentModifierMask = []
         
-        let optimizeWindow = menu.addItem(withTitle: NSLocalizedString("optimizeWindow", comment: "合适窗口大小"), action: #selector(optimizeWindow), keyEquivalent: "2")
+        let optimizeWindow = menu.addItem(withTitle: NSLocalizedString("optimizeWindow", comment: "合适窗口大小"), action: #selector(optimizeWindow), keyEquivalent: "")
         optimizeWindow.keyEquivalentModifierMask = []
         
-        let adjustWindowActual = menu.addItem(withTitle: NSLocalizedString("Adjust Window to Actual Image Size", comment: "调整窗口至图片实际大小"), action: #selector(adjustWindowActual), keyEquivalent: "3")
+        let adjustWindowActual = menu.addItem(withTitle: NSLocalizedString("Adjust Window to Actual Image Size", comment: "调整窗口至图片实际大小"), action: #selector(adjustWindowActual), keyEquivalent: "")
         adjustWindowActual.keyEquivalentModifierMask = []
         
-        let adjustWindowCurrent = menu.addItem(withTitle: NSLocalizedString("Adjust Window to Current Image Size", comment: "调整窗口至图片当前大小"), action: #selector(adjustWindowCurrent), keyEquivalent: "4")
+        let adjustWindowCurrent = menu.addItem(withTitle: NSLocalizedString("Adjust Window to Current Image Size", comment: "调整窗口至图片当前大小"), action: #selector(adjustWindowCurrent), keyEquivalent: "")
         adjustWindowCurrent.keyEquivalentModifierMask = []
         
-        let adjustWindowToCenter = menu.addItem(withTitle: NSLocalizedString("Center the Window", comment: "将窗口居中"), action: #selector(adjustWindowToCenter), keyEquivalent: "5")
+        let adjustWindowToCenter = menu.addItem(withTitle: NSLocalizedString("Center the Window", comment: "将窗口居中"), action: #selector(adjustWindowToCenter), keyEquivalent: "")
         adjustWindowToCenter.keyEquivalentModifierMask = []
         
         adjustWindowActual.isEnabled = (viewController.publicVar.isInLargeView)
@@ -1699,12 +1715,20 @@ extension WindowController: NSToolbarDelegate {
             
             menu.addItem(NSMenuItem.separator())
             
-            let switchToActualSize = menu.addItem(withTitle: NSLocalizedString("switchToActualSize", comment: "图片默认实际大小"), action: #selector(switchToActualSize), keyEquivalent: "")
-            
             let switchToFitToWindow = menu.addItem(withTitle: NSLocalizedString("switchToFitToWindow", comment: "图片默认适应窗口"), action: #selector(switchToFitToWindow), keyEquivalent: "")
+            let switchToActualSize = menu.addItem(withTitle: NSLocalizedString("switchToActualSize", comment: "图片默认实际大小"), action: #selector(switchToActualSize), keyEquivalent: "")
+            let switchToFill = menu.addItem(withTitle: NSLocalizedString("initial-zoom-fill", comment: "Fill Window"), action: #selector(switchToFillWindow), keyEquivalent: "")
             
-            switchToActualSize.state = (viewController.publicVar.isLargeImageFitWindow == false) ? .on : .off
-            switchToFitToWindow.state = (viewController.publicVar.isLargeImageFitWindow == true) ? .on : .off
+            switchToFitToWindow.state = globalVar.initialZoomMode == .fit ? .on : .off
+            switchToActualSize.state = globalVar.initialZoomMode == .actual ? .on : .off
+            switchToFill.state = globalVar.initialZoomMode == .fill ? .on : .off
+            
+            menu.addItem(NSMenuItem.separator())
+            let portableItem = menu.addItem(withTitle: NSLocalizedString("Portable Browsing Mode", comment: "便携浏览模式"), action: #selector(togglePortableMode), keyEquivalent: "")
+            portableItem.state = globalVar.portableMode ? .on : .off
+            let keepWin = menu.addItem(withTitle: NSLocalizedString("portable-keep-window-browsing", comment: "Keep Window Size When Browsing"), action: #selector(togglePortableKeepWindow), keyEquivalent: "")
+            keepWin.state = globalVar.portableKeepWindowWhenBrowsing ? .on : .off
+            keepWin.isEnabled = globalVar.portableMode
         }
 
         menu.addItem(NSMenuItem.separator())
@@ -1823,6 +1847,16 @@ extension WindowController: NSToolbarDelegate {
     @objc func switchToFitToWindow(_ sender: NSMenuItem){
         guard let viewController = contentViewController as? ViewController else {return}
         viewController.switchToFitToWindowForLargeImage()
+    }
+    
+    @objc func switchToFillWindow(_ sender: NSMenuItem){
+        guard let viewController = contentViewController as? ViewController else {return}
+        viewController.switchToFillWindowForLargeImage()
+    }
+    
+    @objc func togglePortableKeepWindow(_ sender: NSMenuItem){
+        globalVar.portableKeepWindowWhenBrowsing.toggle()
+        UserDefaults.standard.set(globalVar.portableKeepWindowWhenBrowsing, forKey: "portableKeepWindowWhenBrowsing")
     }
     
     @objc func switchToSystemTheme(_ sender: NSMenuItem){

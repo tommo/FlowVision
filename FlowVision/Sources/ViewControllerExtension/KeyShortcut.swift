@@ -490,6 +490,14 @@ extension ViewController {
                 }
             }
             
+            // Fullscreen: Cmd+F (common media-player binding), also Opt+Enter / Ctrl+Cmd+F via menu
+            // Must run before bare "f" and must consume the event so Find menu does not steal Cmd+F.
+            if characters == "f" && isOnlyCommandPressed {
+                if let window = view.window {
+                    window.toggleFullScreen(nil)
+                }
+                return nil
+            }
             // 检查按键是否是 Opt + 回车、小键盘回车 键
             // Check if key is Opt + Enter, numpad Enter
             if (specialKey == .carriageReturn || specialKey == .enter) && isOnlyAltPressed {
@@ -568,37 +576,33 @@ extension ViewController {
             //                    switchToDetailView()
             //                }
             
-            // 检查按键是否是 12345 键
-            // Check if key is 12345
-            if (["1","2","3","4","5"].contains(characters)) && noModifierKey {
-                if view.window?.styleMask.contains(.fullScreen) == true {
+            // Photoshop-style zoom: Cmd+0 fit, Cmd+1 100%, Cmd+2 200% (large view only).
+            // Must run before tag Cmd+digit handling so zoom wins in large view.
+            if publicVar.isInLargeView && isOnlyCommandPressed {
+                if characters == "0" {
+                    largeImageView.zoomFit()
                     return nil
                 }
-                if characters == "1" { // 1
-                    adjustWindowMaximize()
+                if characters == "1" {
+                    largeImageView.zoom100()
                     return nil
-                }else if characters == "2"{ // 2
-                    adjustWindowSuitable()
+                }
+                if characters == "2" {
+                    largeImageView.zoom200()
                     return nil
-                }else if characters == "5"{ // 5
-                    adjustWindowToCenter()
-                    return nil
-                }else{
-                    if publicVar.isInLargeView {
-                        if characters == "3"{ // 3
-                            adjustWindowImageActual()
-                            return nil
-                        }else if characters == "4"{ // 4
-                            adjustWindowImageCurrent()
-                            return nil
-                        }
-                    }
                 }
             }
 
+            // Bare number keys 0–5 no longer run window-size / number shortcuts.
+            // (Previously: 1 maximize, 2 suitable, 3–4 image window, 5 center, 0 reset/thumb size.)
+
             // 检查按键是否是 Command+1~9 键
-            // Check if key is Command+1~9
+            // Check if key is Command+1~9 (Finder tags). Skipped for Cmd+0/1/2 in large view above.
             if ["1","2","3","4","5","6","7","8","9"].contains(characters) && isOnlyCommandPressed {
+                // In large view, Cmd+1/2 are zoom; do not toggle tags for those.
+                if publicVar.isInLargeView && (characters == "1" || characters == "2") {
+                    return nil
+                }
                 if publicVar.isCollectionViewFirstResponder {
                     let index = Int(characters)! - 1
                     handleToggleFinderTag(FinderTag.all[index].name)
@@ -868,11 +872,15 @@ extension ViewController {
             }
             
             // 检查按键是否是 "F" 键
-            // Check if key is "F"
+            // Check if key is "F" (bare): mirror image in large view, sidebar in browser
             if characters == "f" && noModifierKey && !isFnPressed {
-                if publicVar.isInLargeView{
-                    largeImageView.actMirrorH()
-                }else{
+                if publicVar.isInLargeView {
+                    if largeImageView.file.type == .image {
+                        largeImageView.actMirrorH()
+                    }
+                    // Video: bare F is a no-op (use Cmd+F for fullscreen)
+                    return nil
+                } else {
                     toggleSidebar()
                     return nil
                 }
@@ -917,17 +925,7 @@ extension ViewController {
                 }
             }
             
-            // 检查按键是否是 0、0(小键盘) 键
-            // Check if key is 0, 0(numpad)
-            if characters == "0" && noModifierKey {
-                if publicVar.isInLargeView {
-                    changeLargeImage(firstShowThumb: false, resetSize: true, triggeredByLongPress: true)
-                    return nil
-                }else{
-                    adjustThumbSizeByDirection(direction: 0)
-                    return nil
-                }
-            }
+            // Bare "0" number shortcut removed (was: reset large image / default thumb size).
             
             // 检查按键是否是 "N" 键
             // Check if key is "N"

@@ -186,8 +186,29 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
             globalVar.doNotUseFFmpeg = doNotUseFFmpeg
         }
         if let portableMode = UserDefaults.standard.value(forKey: "portableMode") as? Bool {
-            // Temporary disable portable mode feature
-            // globalVar.portableMode = portableMode
+            globalVar.portableMode = portableMode
+        }
+        if let portableImageUseActualSize = UserDefaults.standard.value(forKey: "portableImageUseActualSize") as? Bool {
+            globalVar.portableImageUseActualSize = portableImageUseActualSize
+        }
+        if let portableKeepWindowWhenBrowsing = UserDefaults.standard.value(forKey: "portableKeepWindowWhenBrowsing") as? Bool {
+            globalVar.portableKeepWindowWhenBrowsing = portableKeepWindowWhenBrowsing
+        }
+        if let portableCenterOnOpen = UserDefaults.standard.value(forKey: "portableCenterOnOpen") as? Bool {
+            globalVar.portableCenterOnOpen = portableCenterOnOpen
+        }
+        if let zoomRaw = UserDefaults.standard.value(forKey: "initialZoomMode") as? String,
+           let mode = InitialZoomMode(rawValue: zoomRaw) {
+            globalVar.initialZoomMode = mode
+        } else if let isLargeImageFitWindow = UserDefaults.standard.value(forKey: "isLargeImageFitWindow") as? Bool {
+            // Migrate legacy bool → enum
+            globalVar.initialZoomMode = isLargeImageFitWindow ? .fit : .actual
+        }
+        if let w = UserDefaults.standard.value(forKey: "portableImageWidthRatio") as? Double {
+            globalVar.portableImageWidthRatio = w
+        }
+        if let h = UserDefaults.standard.value(forKey: "portableImageHeightRatio") as? Double {
+            globalVar.portableImageHeightRatio = h
         }
         if let videoPlayRememberPosition = UserDefaults.standard.value(forKey: "videoPlayRememberPosition") as? Bool {
             globalVar.videoPlayRememberPosition = videoPlayRememberPosition
@@ -215,6 +236,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
         }
         if let scrollMouseWheelToZoom = UserDefaults.standard.value(forKey: "scrollMouseWheelToZoom") as? Bool {
             globalVar.scrollMouseWheelToZoom = scrollMouseWheelToZoom
+        }
+        if let useNearestFilterWhenUpsampling = UserDefaults.standard.value(forKey: "useNearestFilterWhenUpsampling") as? Bool {
+            globalVar.useNearestFilterWhenUpsampling = useNearestFilterWhenUpsampling
+        }
+        if let useLanczosFilterWhenDownsampling = UserDefaults.standard.value(forKey: "useLanczosFilterWhenDownsampling") as? Bool {
+            globalVar.useLanczosFilterWhenDownsampling = useLanczosFilterWhenDownsampling
         }
         if let scrollSensitivity = UserDefaults.standard.value(forKey: "scrollSensitivity") as? Double {
             globalVar.scrollSensitivity = scrollSensitivity
@@ -696,15 +723,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
             gridViewMenuItem.isHidden = mainViewController.publicVar.isInLargeView
             //detailViewModeMenuItem.isHidden = mainViewController.publicVar.isInLargeView
             
-            maximizeWindowMenuItem.keyEquivalent="1"
+            // Bare number keys 0–5 no longer run window-size shortcuts (Cmd+0/1/2 are zoom in large view).
+            maximizeWindowMenuItem.keyEquivalent=""
             maximizeWindowMenuItem.keyEquivalentModifierMask=[]
-            optimizeWindowMenuItem.keyEquivalent="2"
+            optimizeWindowMenuItem.keyEquivalent=""
             optimizeWindowMenuItem.keyEquivalentModifierMask=[]
-            adjustWindowActualMenuItem.keyEquivalent="3"
+            adjustWindowActualMenuItem.keyEquivalent=""
             adjustWindowActualMenuItem.keyEquivalentModifierMask=[]
-            adjustWindowCurrentMenuItem.keyEquivalent="4"
+            adjustWindowCurrentMenuItem.keyEquivalent=""
             adjustWindowCurrentMenuItem.keyEquivalentModifierMask=[]
-            adjustWindowToCenterMenuItem.keyEquivalent="5"
+            adjustWindowToCenterMenuItem.keyEquivalent=""
             adjustWindowToCenterMenuItem.keyEquivalentModifierMask=[]
             
 //            justifiedViewMenuItem.keyEquivalent="1"
@@ -716,8 +744,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
 //            detailViewModeMenuItem.keyEquivalent="4"
 //            detailViewModeMenuItem.keyEquivalentModifierMask=[]
             
-            switchToActualSizeMenuItem.state = (mainViewController.publicVar.isLargeImageFitWindow == false) ? .on : .off
-            switchToFitToWindowMenuItem.state = (mainViewController.publicVar.isLargeImageFitWindow == true) ? .on : .off
+            switchToActualSizeMenuItem.state = globalVar.initialZoomMode == .actual ? .on : .off
+            switchToFitToWindowMenuItem.state = globalVar.initialZoomMode == .fit ? .on : .off
             
             toggleSidebarMenuItem.state = (mainViewController.publicVar.profile.isDirTreeHidden == false) ? .on : .off
             toggleSidebarMenuItem.keyEquivalent="f"
@@ -1235,10 +1263,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuItemVa
     
     @IBAction func switchToActualSize(_ sender: NSMenuItem){
         getMainViewController()?.switchToActualSizeForLargeImage()
-        
     }
     @IBAction func switchToFitToWindow(_ sender: NSMenuItem){
         getMainViewController()?.switchToFitToWindowForLargeImage()
+    }
+    @IBAction func switchToFillWindow(_ sender: NSMenuItem){
+        getMainViewController()?.switchToFillWindowForLargeImage()
     }
     
     @IBAction func toggleSidebar(_ sender: NSMenuItem){

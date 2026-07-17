@@ -18,6 +18,13 @@ final class CustomSettingsViewController: NSViewController, SettingsPane {
     @IBOutlet weak var loopBrowsingCheckbox: NSButton!
     @IBOutlet weak var clickEdgeToSwitchImageCheckbox: NSButton!
     @IBOutlet weak var scrollMouseWheelToZoomCheckbox: NSButton!
+    @IBOutlet weak var useNearestFilterWhenUpsamplingCheckbox: NSButton!
+    @IBOutlet weak var useLanczosFilterWhenDownsamplingCheckbox: NSButton!
+    @IBOutlet weak var initialZoomPopup: NSPopUpButton!
+    @IBOutlet weak var portableModeCheckbox: NSButton!
+    @IBOutlet weak var portableKeepWindowCheckbox: NSButton!
+    @IBOutlet weak var portableImageUseActualSizeCheckbox: NSButton!
+    @IBOutlet weak var portableCenterOnOpenCheckbox: NSButton!
     @IBOutlet weak var useInternalPlayerCheckbox: NSButton!
     @IBOutlet weak var usePinyinSearchCheckbox: NSButton!
     @IBOutlet weak var usePinyinInitialSearchCheckbox: NSButton!
@@ -39,6 +46,14 @@ final class CustomSettingsViewController: NSViewController, SettingsPane {
         loopBrowsingCheckbox.state = globalVar.loopBrowsing ? .on : .off
         clickEdgeToSwitchImageCheckbox.state = globalVar.clickEdgeToSwitchImage ? .on : .off
         scrollMouseWheelToZoomCheckbox.state = globalVar.scrollMouseWheelToZoom ? .on : .off
+        useNearestFilterWhenUpsamplingCheckbox.state = globalVar.useNearestFilterWhenUpsampling ? .on : .off
+        useLanczosFilterWhenDownsamplingCheckbox.state = globalVar.useLanczosFilterWhenDownsampling ? .on : .off
+        setupInitialZoomPopup()
+        portableModeCheckbox.state = globalVar.portableMode ? .on : .off
+        portableKeepWindowCheckbox.state = globalVar.portableKeepWindowWhenBrowsing ? .on : .off
+        portableImageUseActualSizeCheckbox.state = globalVar.portableImageUseActualSize ? .on : .off
+        portableCenterOnOpenCheckbox.state = globalVar.portableCenterOnOpen ? .on : .off
+        updatePortableDependentControls()
         useInternalPlayerCheckbox.state = globalVar.useInternalPlayer ? .on : .off
         usePinyinSearchCheckbox.state = globalVar.usePinyinSearch ? .on : .off
         usePinyinInitialSearchCheckbox.state = globalVar.usePinyinInitialSearch ? .on : .off
@@ -85,6 +100,96 @@ final class CustomSettingsViewController: NSViewController, SettingsPane {
     @IBAction func scrollMouseWheelToZoomToggled(_ sender: NSButton) {
         globalVar.scrollMouseWheelToZoom = (sender.state == .on)
         UserDefaults.standard.set(globalVar.scrollMouseWheelToZoom, forKey: "scrollMouseWheelToZoom")
+    }
+
+    @IBAction func useNearestFilterWhenUpsamplingToggled(_ sender: NSButton) {
+        globalVar.useNearestFilterWhenUpsampling = (sender.state == .on)
+        UserDefaults.standard.set(globalVar.useNearestFilterWhenUpsampling, forKey: "useNearestFilterWhenUpsampling")
+        applyResampleOptionChange(forceImageReload: true)
+    }
+
+    @IBAction func useLanczosFilterWhenDownsamplingToggled(_ sender: NSButton) {
+        globalVar.useLanczosFilterWhenDownsampling = (sender.state == .on)
+        UserDefaults.standard.set(globalVar.useLanczosFilterWhenDownsampling, forKey: "useLanczosFilterWhenDownsampling")
+        applyResampleOptionChange(forceImageReload: true)
+    }
+    
+    private func setupInitialZoomPopup() {
+        initialZoomPopup.removeAllItems()
+        for mode in InitialZoomMode.allCases {
+            initialZoomPopup.addItem(withTitle: mode.displayName)
+            initialZoomPopup.lastItem?.representedObject = mode.rawValue
+        }
+        if let idx = InitialZoomMode.allCases.firstIndex(of: globalVar.initialZoomMode) {
+            initialZoomPopup.selectItem(at: idx)
+        }
+    }
+    
+    private func updatePortableDependentControls() {
+        let on = globalVar.portableMode
+        portableKeepWindowCheckbox.isEnabled = on
+        portableImageUseActualSizeCheckbox.isEnabled = on
+        portableCenterOnOpenCheckbox.isEnabled = on
+    }
+    
+    @IBAction func initialZoomPopupChanged(_ sender: NSPopUpButton) {
+        guard let raw = sender.selectedItem?.representedObject as? String,
+              let mode = InitialZoomMode(rawValue: raw) else { return }
+        globalVar.initialZoomMode = mode
+        UserDefaults.standard.set(mode.rawValue, forKey: "initialZoomMode")
+        let fitLike = (mode == .fit || mode == .fill)
+        UserDefaults.standard.set(fitLike, forKey: "isLargeImageFitWindow")
+        if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
+            for windowController in appDelegate.windowControllers {
+                if let vc = windowController.contentViewController as? ViewController {
+                    vc.applyInitialZoomMode(mode)
+                }
+            }
+        }
+    }
+    
+    @IBAction func portableModeToggled(_ sender: NSButton) {
+        globalVar.portableMode = (sender.state == .on)
+        UserDefaults.standard.set(globalVar.portableMode, forKey: "portableMode")
+        updatePortableDependentControls()
+        if let vc = getMainViewController() {
+            vc.adjustWindowPortable(firstShowThumb: false, animate: true)
+        }
+    }
+    
+    @IBAction func portableKeepWindowToggled(_ sender: NSButton) {
+        globalVar.portableKeepWindowWhenBrowsing = (sender.state == .on)
+        UserDefaults.standard.set(globalVar.portableKeepWindowWhenBrowsing, forKey: "portableKeepWindowWhenBrowsing")
+    }
+    
+    @IBAction func portableImageUseActualSizeToggled(_ sender: NSButton) {
+        globalVar.portableImageUseActualSize = (sender.state == .on)
+        UserDefaults.standard.set(globalVar.portableImageUseActualSize, forKey: "portableImageUseActualSize")
+    }
+    
+    @IBAction func portableCenterOnOpenToggled(_ sender: NSButton) {
+        globalVar.portableCenterOnOpen = (sender.state == .on)
+        UserDefaults.standard.set(globalVar.portableCenterOnOpen, forKey: "portableCenterOnOpen")
+    }
+    
+    /// Push layer/draw filter update and reload large image so the option takes effect immediately.
+    private func applyResampleOptionChange(forceImageReload: Bool) {
+        if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
+            for windowController in appDelegate.windowControllers {
+                if let viewController = windowController.contentViewController as? ViewController {
+                    viewController.largeImageView.imageView.applyResampleFilters()
+                    if forceImageReload, viewController.publicVar.isInLargeView {
+                        viewController.changeLargeImage(
+                            firstShowThumb: false,
+                            resetSize: false,
+                            triggeredByLongPress: false,
+                            forceRefresh: true,
+                            isByZoom: true
+                        )
+                    }
+                }
+            }
+        }
     }
 
     @IBAction func useInternalPlayerToggled(_ sender: NSButton) {
